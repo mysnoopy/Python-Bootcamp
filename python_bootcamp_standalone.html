@@ -27,7 +27,7 @@
   /* Light theme */
   body.light { --bg: #f8fafc; --bg-deep: #f1f5f9; --bg-mid: #ffffff; --bg-raised: #f1f5f9; --border: #e2e8f0; --border-hover: #94a3b8; --text: #1e293b; --text-dim: #475569; --text-muted: #64748b; --text-faint: #94a3b8; --code-bg: #f8fafc; }
 
-  .CodeMirror { height: 100% !important; font-family: 'JetBrains Mono','Courier New',monospace !important; font-size: 11px !important; line-height: 1.7 !important; }
+  .CodeMirror { height: 100% !important; font-family: 'JetBrains Mono','Courier New',monospace !important; font-size: 13px !important; line-height: 1.7 !important; }
   .cm-wrap { height: 100%; }
 
   /* Mobile layout */
@@ -660,22 +660,22 @@ finally:
           <span style={{fontSize:18,flexShrink:0}}>🐍</span>
           <div style={{minWidth:0}}>
             <div style={{fontSize:12,fontWeight:"bold",color:"#00D084",letterSpacing:1,whiteSpace:"nowrap"}}>PYTHON BOOTCAMP</div>
-            <div className="hdr-sub" style={{fontSize:9,color:T.textFnt}}>Line-by-Line · Built-in Editor · Run in Browser</div>
+            <div className="hdr-sub" style={{fontSize:13,color:T.textFnt}}>Line-by-Line · Built-in Editor · Run in Browser</div>
           </div>
         </div>
         <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
-          <span style={{fontSize:10,color:pyReady?"#00D084":"#F59E0B",flexShrink:0}}>{pyReady?"🟢":"⏳"}</span>
-          <button onClick={()=>setShowSettings(true)} style={{background:T.bgRaised,color:hasKey?"#00D084":"#F59E0B",border:`1px solid ${T.border}`,borderRadius:5,padding:"3px 8px",fontSize:10,flexShrink:0}}>
+          <span style={{fontSize:12,color:pyReady?"#00D084":"#F59E0B",flexShrink:0}}>{pyReady?"🟢":"⏳"}</span>
+          <button onClick={()=>setShowSettings(true)} style={{background:T.bgRaised,color:hasKey?"#00D084":"#F59E0B",border:`1px solid ${T.border}`,borderRadius:5,padding:"3px 8px",fontSize:12,flexShrink:0}}>
             {hasKey?`⚙️ ${activeProvider} ✅`:"⚙️ Setup AI"}
           </button>
-          <button onClick={()=>setTheme(D?"light":"dark")} style={{background:T.bgRaised,color:T.textDim,border:`1px solid ${T.border}`,borderRadius:5,padding:"3px 8px",fontSize:10,flexShrink:0}}>
+          <button onClick={()=>setTheme(D?"light":"dark")} style={{background:T.bgRaised,color:T.textDim,border:`1px solid ${T.border}`,borderRadius:5,padding:"3px 8px",fontSize:12,flexShrink:0}}>
             {D?"☀️":"🌙"}
           </button>
-          <div title="Completed" style={{background:T.bgRaised,borderRadius:20,padding:"2px 8px",fontSize:10,color:"#00D084",flexShrink:0}}>{doneCount}/{totalLessons} ✅</div>
-          <div title="Progress"  style={{background:T.bgRaised,borderRadius:20,padding:"2px 8px",fontSize:10,color:"#F59E0B",flexShrink:0}}>{pct}%</div>
+          <div title="Completed" style={{background:T.bgRaised,borderRadius:20,padding:"2px 8px",fontSize:12,color:"#00D084",flexShrink:0}}>{doneCount}/{totalLessons} ✅</div>
+          <div title="Progress"  style={{background:T.bgRaised,borderRadius:20,padding:"2px 8px",fontSize:12,color:"#F59E0B",flexShrink:0}}>{pct}%</div>
           {doneCount>0 && (
             <button title="Reset progress" onClick={()=>{ if(window.confirm("Reset all lesson progress?")){ ["bc_phase","bc_lesson","bc_completed","bc_bestscore"].forEach(k=>localStorage.removeItem(k)); setActivePhaseRaw(0);setActiveLessonRaw(null);setCompletedRaw({});setBestScore(0);setQuiz({active:false,q:0,score:0,answered:null}); }}}
-              style={{background:"transparent",color:T.textFnt,border:"none",fontSize:10,padding:"2px 4px"}}>🗑</button>
+              style={{background:"transparent",color:T.textFnt,border:"none",fontSize:12,padding:"2px 4px"}}>🗑</button>
           )}
         </div>
       </div>
@@ -689,7 +689,7 @@ finally:
       <div style={{background:T.bgDeep,borderBottom:`1px solid ${T.border}`,padding:"5px 14px",display:"flex",gap:5,flexShrink:0}}>
         {[{id:"curriculum",label:"📚 Lessons"},{id:"cheatsheet",label:"📋 Cheat Sheet"},{id:"quiz",label:"🧠 Quiz"}].map(t=>(
           <button key={t.id} onClick={()=>{setView(t.id);setActiveLesson(null);}}
-            style={{background:view===t.id?"#00D084":"transparent",color:view===t.id?"#000":T.textMut,border:`1px solid ${view===t.id?"#00D084":T.border}`,borderRadius:5,padding:"4px 10px",fontSize:10,fontWeight:view===t.id?"bold":"normal"}}>
+            style={{background:view===t.id?"#00D084":"transparent",color:view===t.id?"#000":T.textMut,border:`1px solid ${view===t.id?"#00D084":T.border}`,borderRadius:5,padding:"4px 10px",fontSize:12,fontWeight:view===t.id?"bold":"normal"}}>
             {t.label}
           </button>
         ))}
@@ -707,15 +707,15 @@ finally:
                   style={{width:"100%",background:activePhase===idx?T.bgRaised:"transparent",border:"none",borderLeft:`3px solid ${activePhase===idx?p.color:"transparent"}`,padding:"8px 10px",textAlign:"left",display:"flex",alignItems:"center",gap:6}}>
                   <span style={{fontSize:13}}>{p.icon}</span>
                   <div>
-                    <div style={{fontSize:9,color:T.textMut}}>{p.phase}</div>
-                    <div style={{fontSize:11,color:activePhase===idx?p.color:T.text,fontWeight:activePhase===idx?"bold":"normal"}}>{p.title}</div>
+                    <div style={{fontSize:13,color:T.textMut}}>{p.phase}</div>
+                    <div style={{fontSize:13,color:activePhase===idx?p.color:T.text,fontWeight:activePhase===idx?"bold":"normal"}}>{p.title}</div>
                   </div>
                 </button>
                 {activePhase===idx && p.lessons.map(l=>(
                   <button key={l.id} onClick={()=>{setActiveLesson(l);loadLessonCode(l);}}
                     style={{width:"100%",background:activeLesson?.id===l.id?T.border:"transparent",border:"none",padding:"5px 10px 5px 28px",textAlign:"left",display:"flex",alignItems:"center",gap:5}}>
-                    <span style={{fontSize:9}}>{completed[l.id]?"✅":"⬜"}</span>
-                    <span style={{fontSize:10,color:activeLesson?.id===l.id?T.text:T.textDim,fontWeight:activeLesson?.id===l.id?"bold":"normal"}}>{l.title}</span>
+                    <span style={{fontSize:13}}>{completed[l.id]?"✅":"⬜"}</span>
+                    <span style={{fontSize:12,color:activeLesson?.id===l.id?T.text:T.textDim,fontWeight:activeLesson?.id===l.id?"bold":"normal"}}>{l.title}</span>
                   </button>
                 ))}
               </div>
@@ -730,7 +730,7 @@ finally:
           {view==="curriculum" && !activeLesson && (
             <div style={{padding:18,overflowY:"auto",flex:1,background:T.bg}}>
               <div style={{fontSize:16,fontWeight:"bold",color:phase.color,marginBottom:3}}>{phase.icon} {phase.phase}: {phase.title}</div>
-              <div style={{fontSize:11,color:T.textMut,marginBottom:14}}>Select a lesson to begin →</div>
+              <div style={{fontSize:13,color:T.textMut,marginBottom:14}}>Select a lesson to begin →</div>
               <div className="phase-grid" style={{display:"grid",gap:10}}>
                 {phase.lessons.map(l=>(
                   <div key={l.id} onClick={()=>{setActiveLesson(l);loadLessonCode(l);}}
@@ -740,12 +740,12 @@ finally:
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:7}}>
                       <div>
                         <div style={{fontSize:13,fontWeight:"bold",color:T.text,marginBottom:2}}>{l.title}</div>
-                        <div style={{fontSize:11,color:phase.color}}>{l.project}</div>
+                        <div style={{fontSize:13,color:phase.color}}>{l.project}</div>
                       </div>
-                      <span style={{fontSize:10,color:T.textMut,background:T.bgRaised,padding:"2px 7px",borderRadius:8,height:"fit-content",flexShrink:0}}>⏱ {l.duration}</span>
+                      <span style={{fontSize:12,color:T.textMut,background:T.bgRaised,padding:"2px 7px",borderRadius:8,height:"fit-content",flexShrink:0}}>⏱ {l.duration}</span>
                     </div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                      {l.concepts.map(c=><span key={c} style={{background:T.bg,border:`1px solid ${phase.color}44`,color:phase.color,padding:"1px 5px",borderRadius:3,fontSize:9}}>{c}</span>)}
+                      {l.concepts.map(c=><span key={c} style={{background:T.bg,border:`1px solid ${phase.color}44`,color:phase.color,padding:"1px 5px",borderRadius:3,fontSize:13}}>{c}</span>)}
                     </div>
                   </div>
                 ))}
@@ -761,22 +761,22 @@ finally:
               <div className="lesson-pane" style={{flex:1,overflowY:"auto",minWidth:180,background:T.bg}}>
                 <div style={{padding:"9px 12px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:T.bgDeep,flexShrink:0}}>
                   <div>
-                    <button onClick={()=>setActiveLesson(null)} style={{background:"none",border:"none",color:T.textDim,fontSize:10,padding:0,marginBottom:2}}>← Back</button>
+                    <button onClick={()=>setActiveLesson(null)} style={{background:"none",border:"none",color:T.textDim,fontSize:12,padding:0,marginBottom:2}}>← Back</button>
                     <div style={{fontSize:13,fontWeight:"bold",color:T.text}}>{activeLesson.title}</div>
-                    <div style={{fontSize:11,color:phase.color}}>{activeLesson.project}</div>
+                    <div style={{fontSize:13,color:phase.color}}>{activeLesson.project}</div>
                   </div>
                   <div style={{display:"flex",gap:5,flexShrink:0}}>
-                    <button onClick={()=>setShowExp(!showExp)} style={{background:showExp?phase.color:T.bgRaised,color:showExp?"#000":T.textDim,border:"none",borderRadius:5,padding:"3px 7px",fontSize:9}}>
+                    <button onClick={()=>setShowExp(!showExp)} style={{background:showExp?phase.color:T.bgRaised,color:showExp?"#000":T.textDim,border:"none",borderRadius:5,padding:"3px 7px",fontSize:13}}>
                       {showExp?"💡 ON":"💡 OFF"}
                     </button>
                     <button onClick={()=>setCompleted(p=>({...p,[activeLesson.id]:true}))}
-                      style={{background:completed[activeLesson.id]?T.bgRaised:phase.color,color:completed[activeLesson.id]?T.textMut:"#000",border:"none",borderRadius:5,padding:"3px 7px",fontSize:9}}>
+                      style={{background:completed[activeLesson.id]?T.bgRaised:phase.color,color:completed[activeLesson.id]?T.textMut:"#000",border:"none",borderRadius:5,padding:"3px 7px",fontSize:13}}>
                       {completed[activeLesson.id]?"✅ Done":"Mark Done"}
                     </button>
                   </div>
                 </div>
                 <div style={{margin:"7px 10px",background:D?"#2d2a1e":"#fffbeb",border:"1px solid #F59E0B44",borderRadius:6,padding:"6px 10px"}}>
-                  <div style={{color:"#F59E0B",fontSize:10,lineHeight:1.6}}>{activeLesson.memTrick}</div>
+                  <div style={{color:"#F59E0B",fontSize:12,lineHeight:1.6}}>{activeLesson.memTrick}</div>
                 </div>
                 <div style={{margin:"0 10px 12px"}}>
                   {activeLesson.lines.map((line,i)=>{
@@ -786,13 +786,13 @@ finally:
                     return (
                       <div key={i} style={{background:T.bgRaised,marginBottom:1,borderRadius:3,overflow:"hidden"}}>
                         <div style={{display:"flex"}}>
-                          <div style={{width:24,flexShrink:0,padding:"6px 0",textAlign:"center",fontSize:9,color:T.textFnt,borderRight:`1px solid ${T.bg}`}}>{i+1}</div>
+                          <div style={{width:24,flexShrink:0,padding:"6px 0",textAlign:"center",fontSize:13,color:T.textFnt,borderRight:`1px solid ${T.bg}`}}>{i+1}</div>
                           <div style={{flex:1,padding:"6px 8px"}}>
-                            <pre style={{margin:0,fontSize:11,color:T.text,whiteSpace:"pre-wrap",lineHeight:1.5}}>{line.code||" "}</pre>
+                            <pre style={{margin:0,fontSize:13,color:T.text,whiteSpace:"pre-wrap",lineHeight:1.5}}>{line.code||" "}</pre>
                             {showExp && line.exp && (
                               <div style={{marginTop:3,padding:"4px 7px",background:T.bg,borderRadius:3,borderLeft:`2px solid ${iconColor}`,display:"flex",gap:5}}>
-                                <span style={{fontSize:11,flexShrink:0}}>{icon}</span>
-                                <span style={{fontSize:10,color:T.textDim,lineHeight:1.6}}>{line.exp.slice(2)}</span>
+                                <span style={{fontSize:13,flexShrink:0}}>{icon}</span>
+                                <span style={{fontSize:12,color:T.textDim,lineHeight:1.6}}>{line.exp.slice(2)}</span>
                               </div>
                             )}
                           </div>
@@ -814,12 +814,12 @@ finally:
               {/* RIGHT: Editor */}
               <div className="editor-pane" style={{width:editorWidth,display:"flex",flexDirection:"column",background:T.codeBg,flexShrink:0,minWidth:180}}>
                 <div style={{padding:"6px 10px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:T.bgDeep,flexShrink:0}}>
-                  <div style={{fontSize:10,color:T.textDim}}>📝 Editor</div>
+                  <div style={{fontSize:12,color:T.textDim}}>📝 Editor</div>
                   <div style={{display:"flex",gap:4}}>
-                    <button onClick={()=>loadLessonCode(activeLesson)} style={{background:T.bgRaised,color:T.textDim,border:"none",borderRadius:4,padding:"2px 7px",fontSize:9}}>↺ Reset</button>
-                    <button onClick={()=>copyCode(cmRef.current?cmRef.current.getValue():code,"editor")} style={{background:copied==="editor"?"#00D084":T.bgRaised,color:copied==="editor"?"#000":T.textDim,border:"none",borderRadius:4,padding:"2px 7px",fontSize:9}}>{copied==="editor"?"✅":"📋"}</button>
+                    <button onClick={()=>loadLessonCode(activeLesson)} style={{background:T.bgRaised,color:T.textDim,border:"none",borderRadius:4,padding:"2px 7px",fontSize:13}}>↺ Reset</button>
+                    <button onClick={()=>copyCode(cmRef.current?cmRef.current.getValue():code,"editor")} style={{background:copied==="editor"?"#00D084":T.bgRaised,color:copied==="editor"?"#000":T.textDim,border:"none",borderRadius:4,padding:"2px 7px",fontSize:13}}>{copied==="editor"?"✅":"📋"}</button>
                     <button onClick={runCode} disabled={running||!pyReady}
-                      style={{background:running?T.bgRaised:"#00D084",color:running?T.textDim:"#000",border:"none",borderRadius:4,padding:"2px 10px",fontSize:10,fontWeight:"bold",cursor:running||!pyReady?"not-allowed":"pointer"}}>
+                      style={{background:running?T.bgRaised:"#00D084",color:running?T.textDim:"#000",border:"none",borderRadius:4,padding:"2px 10px",fontSize:12,fontWeight:"bold",cursor:running||!pyReady?"not-allowed":"pointer"}}>
                       {running?"⏳":"▶ Run"}
                     </button>
                   </div>
@@ -839,13 +839,13 @@ finally:
                 {/* OUTPUT */}
                 <div style={{height:outputHeight,display:"flex",flexDirection:"column",background:T.bgDeep,flexShrink:0,minHeight:60,position:"relative"}}>
                   <div style={{padding:"5px 10px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
-                    <div style={{fontSize:10,color:T.textDim}}>⚡ Output</div>
-                    <button onClick={()=>setOutput("")} style={{background:"none",border:"none",color:T.textFnt,fontSize:9}}>Clear</button>
+                    <div style={{fontSize:12,color:T.textDim}}>⚡ Output</div>
+                    <button onClick={()=>setOutput("")} style={{background:"none",border:"none",color:T.textFnt,fontSize:13}}>Clear</button>
                   </div>
                   <div style={{flex:1,overflowY:"auto",padding:"8px 10px"}}>
                     {output
-                      ? <pre style={{margin:0,fontSize:11,color:output.includes("❌")?"#fc8181":"#68d391",whiteSpace:"pre-wrap",lineHeight:1.6}}>{output}</pre>
-                      : <div style={{color:T.textFnt,fontSize:10,fontStyle:"italic"}}>Click ▶ Run to see output…</div>}
+                      ? <pre style={{margin:0,fontSize:13,color:output.includes("❌")?"#fc8181":"#68d391",whiteSpace:"pre-wrap",lineHeight:1.6}}>{output}</pre>
+                      : <div style={{color:T.textFnt,fontSize:12,fontStyle:"italic"}}>Click ▶ Run to see output…</div>}
                   </div>
                   {/* Corner grip */}
                   <div style={{position:"absolute",bottom:0,right:0,width:14,height:14,cursor:"nw-resize",opacity:0.4,display:"flex",alignItems:"flex-end",justifyContent:"flex-end",padding:2}}
@@ -883,13 +883,13 @@ finally:
                   {cat:"Strings",         items:["s.lower()","s.upper()","s.strip()",'s.split(",")','f"Hi {name}"']},
                 ].map(sec=>(
                   <div key={sec.cat} style={{background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:8,overflow:"hidden"}}>
-                    <div style={{background:T.bgDeep,padding:"5px 10px",fontSize:10,fontWeight:"bold",color:"#00D084"}}>{sec.cat}</div>
+                    <div style={{background:T.bgDeep,padding:"5px 10px",fontSize:12,fontWeight:"bold",color:"#00D084"}}>{sec.cat}</div>
                     <div style={{padding:7}}>
                       {sec.items.map((item,i)=>(
                         <div key={i} onClick={()=>copyCode(item,`cs-${sec.cat}-${i}`)}
                           style={{background:copied===`cs-${sec.cat}-${i}`?"#00D08422":T.bg,borderRadius:3,padding:"3px 7px",marginBottom:3,cursor:"pointer",display:"flex",justifyContent:"space-between"}}>
-                          <code style={{fontSize:10,color:T.text}}>{item}</code>
-                          <span style={{fontSize:9,color:T.textFnt}}>{copied===`cs-${sec.cat}-${i}`?"✅":"copy"}</span>
+                          <code style={{fontSize:12,color:T.text}}>{item}</code>
+                          <span style={{fontSize:13,color:T.textFnt}}>{copied===`cs-${sec.cat}-${i}`?"✅":"copy"}</span>
                         </div>
                       ))}
                     </div>
@@ -904,13 +904,13 @@ finally:
             <div style={{padding:18,overflowY:"auto",flex:1,background:T.bg}}>
               <div style={{maxWidth:480,margin:"0 auto"}}>
                 <div style={{fontSize:16,fontWeight:"bold",color:T.text,marginBottom:3}}>🧠 Syntax Quiz</div>
-                <div style={{fontSize:11,color:T.textMut,marginBottom:18}}>No peeking! Builds muscle memory. Do this every morning.</div>
+                <div style={{fontSize:13,color:T.textMut,marginBottom:18}}>No peeking! Builds muscle memory. Do this every morning.</div>
 
                 {!quiz.active && quiz.q===0 && (
                   <div style={{textAlign:"center",padding:36}}>
                     <div style={{fontSize:48,marginBottom:10}}>🧠</div>
                     <div style={{fontSize:14,color:T.text,marginBottom:6}}>{QUIZ.length} questions · Answer from memory</div>
-                    {bestScore>0 && <div style={{fontSize:11,color:"#F59E0B",marginBottom:18}}>🏅 Best score: {bestScore}/{QUIZ.length}</div>}
+                    {bestScore>0 && <div style={{fontSize:13,color:"#F59E0B",marginBottom:18}}>🏅 Best score: {bestScore}/{QUIZ.length}</div>}
                     {!bestScore && <div style={{height:18,marginBottom:18}}/>}
                     <button onClick={()=>setQuiz({active:true,q:0,score:0,answered:null})}
                       style={{background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"10px 24px",fontSize:12,fontWeight:"bold"}}>
@@ -921,7 +921,7 @@ finally:
 
                 {quiz.active && quiz.q<QUIZ.length && (
                   <div>
-                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,fontSize:10,color:T.textMut}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,fontSize:12,color:T.textMut}}>
                       <span>Q {quiz.q+1} of {QUIZ.length}</span><span>Score: {quiz.score}/{quiz.q} ✅</span>
                     </div>
                     <div style={{background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:8,padding:14,marginBottom:10}}>
@@ -935,7 +935,7 @@ finally:
                         return (
                           <button key={i} disabled={answered}
                             onClick={()=>setQuiz(p=>({...p,answered:opt,score:opt===QUIZ[p.q].a?p.score+1:p.score}))}
-                            style={{background:bg,border:`1px solid ${border}`,color,borderRadius:6,padding:"9px 12px",fontSize:11,cursor:answered?"default":"pointer",textAlign:"left"}}>
+                            style={{background:bg,border:`1px solid ${border}`,color,borderRadius:6,padding:"9px 12px",fontSize:13,cursor:answered?"default":"pointer",textAlign:"left"}}>
                             <code>{opt}</code>{answered&&correct&&" ✅"}{answered&&selected&&!correct&&" ❌"}
                           </button>
                         );
@@ -943,7 +943,7 @@ finally:
                     </div>
                     {quiz.answered && (
                       <button onClick={()=>setQuiz(p=>({...p,q:p.q+1,answered:null}))}
-                        style={{marginTop:9,background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"7px 16px",fontSize:11,fontWeight:"bold"}}>
+                        style={{marginTop:9,background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"7px 16px",fontSize:13,fontWeight:"bold"}}>
                         {quiz.q+1<QUIZ.length?"Next →":"See Score →"}
                       </button>
                     )}
@@ -954,8 +954,8 @@ finally:
                   <div style={{textAlign:"center",padding:36}}>
                     <div style={{fontSize:48,marginBottom:10}}>{quiz.score>=6?"🏆":quiz.score>=4?"💪":"📚"}</div>
                     <div style={{fontSize:22,color:"#00D084",fontWeight:"bold",marginBottom:5}}>{quiz.score}/{QUIZ.length}</div>
-                    {quiz.score>bestScore && <div style={{fontSize:11,color:"#F59E0B",marginBottom:5}}>🎉 New best score!</div>}
-                    {bestScore>0&&quiz.score<=bestScore && <div style={{fontSize:11,color:T.textMut,marginBottom:5}}>🏅 Best: {bestScore}/{QUIZ.length}</div>}
+                    {quiz.score>bestScore && <div style={{fontSize:13,color:"#F59E0B",marginBottom:5}}>🎉 New best score!</div>}
+                    {bestScore>0&&quiz.score<=bestScore && <div style={{fontSize:13,color:T.textMut,marginBottom:5}}>🏅 Best: {bestScore}/{QUIZ.length}</div>}
                     <div style={{fontSize:13,color:T.text,marginBottom:18}}>{quiz.score>=6?"Syntax locked in! 🔥":quiz.score>=4?"Getting there — retry!":"Keep at it — repetition = memory."}</div>
                     <button onClick={()=>{ const nb=Math.max(bestScore,quiz.score); if(nb>bestScore){setBestScore(nb);localStorage.setItem("bc_bestscore",nb);} setQuiz({active:true,q:0,score:0,answered:null}); }}
                       style={{background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"10px 24px",fontSize:12,fontWeight:"bold"}}>
@@ -974,7 +974,7 @@ finally:
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000}}>
           <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:14,padding:22,width:400,maxHeight:"90vh",overflowY:"auto"}}>
             <div style={{fontSize:15,fontWeight:"bold",color:T.text,marginBottom:3}}>⚙️ AI Tutor Setup</div>
-            <div style={{fontSize:11,color:T.textMut,marginBottom:18}}>Enter one API key to power the chat tutor. Stored locally — never sent anywhere else.</div>
+            <div style={{fontSize:13,color:T.textMut,marginBottom:18}}>Enter one API key to power the chat tutor. Stored locally — never sent anywhere else.</div>
 
             {[
               {id:"gemini",    label:"🟢 Google Gemini",    color:"#00D084", badge:"⭐ FREE",         hint:`Go to aistudio.google.com → Get API Key. 30 seconds, no card needed.`,           key:geminiKey,    ph:"Paste Gemini API key"},
@@ -983,29 +983,29 @@ finally:
             ].map(p=>(
               <div key={p.id} style={{marginBottom:14}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                  <div style={{fontSize:11,fontWeight:"bold",color:p.color}}>{p.label}</div>
-                  <span style={{fontSize:9,background:`${p.color}22`,color:p.color,padding:"2px 7px",borderRadius:8,border:`1px solid ${p.color}44`}}>{p.badge}</span>
+                  <div style={{fontSize:13,fontWeight:"bold",color:p.color}}>{p.label}</div>
+                  <span style={{fontSize:13,background:`${p.color}22`,color:p.color,padding:"2px 7px",borderRadius:8,border:`1px solid ${p.color}44`}}>{p.badge}</span>
                 </div>
                 <input value={keyInput[p.id]} onChange={e=>setKeyInput(prev=>({...prev,[p.id]:e.target.value}))}
                   placeholder={p.key?"✅ Saved — paste to update":p.ph}
-                  style={{width:"100%",background:T.bgDeep,border:`1px solid ${p.key?`${p.color}66`:T.border}`,borderRadius:6,padding:"7px 10px",fontSize:11,color:T.text,fontFamily:"inherit",marginBottom:5}}/>
-                <div style={{fontSize:10,color:T.textMut,background:T.bgDeep,borderRadius:5,padding:"6px 10px",borderLeft:`2px solid ${p.color}`}}>
+                  style={{width:"100%",background:T.bgDeep,border:`1px solid ${p.key?`${p.color}66`:T.border}`,borderRadius:6,padding:"7px 10px",fontSize:13,color:T.text,fontFamily:"inherit",marginBottom:5}}/>
+                <div style={{fontSize:12,color:T.textMut,background:T.bgDeep,borderRadius:5,padding:"6px 10px",borderLeft:`2px solid ${p.color}`}}>
                   💡 {p.hint}
                 </div>
               </div>
             ))}
 
             {hasKey && (
-              <div style={{fontSize:10,color:T.textMut,background:T.bgRaised,borderRadius:6,padding:"7px 10px",marginBottom:14,border:`1px solid ${T.border}`}}>
+              <div style={{fontSize:12,color:T.textMut,background:T.bgRaised,borderRadius:6,padding:"7px 10px",marginBottom:14,border:`1px solid ${T.border}`}}>
                 🔄 <strong style={{color:T.textDim}}>Active:</strong> <span style={{color:"#00D084"}}>{activeProvider}</span> — priority: Gemini → OpenAI → Anthropic.
                 {" "}<button onClick={()=>{if(window.confirm("Clear all API keys?")){["gemini_key","openai_key","anthropic_key"].forEach(k=>localStorage.removeItem(k));setGeminiKey("");setOpenaiKey("");setAnthropicKey("");}}}
-                  style={{background:"none",border:"none",color:"#fc8181",fontSize:10,textDecoration:"underline",padding:0,cursor:"pointer"}}>Clear all keys</button>
+                  style={{background:"none",border:"none",color:"#fc8181",fontSize:12,textDecoration:"underline",padding:0,cursor:"pointer"}}>Clear all keys</button>
               </div>
             )}
 
             <div style={{display:"flex",gap:7,justifyContent:"flex-end"}}>
-              <button onClick={()=>setShowSettings(false)} style={{background:T.bgRaised,color:T.textDim,border:"none",borderRadius:6,padding:"7px 14px",fontSize:11}}>Cancel</button>
-              <button onClick={saveKeys} style={{background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"7px 14px",fontSize:11,fontWeight:"bold"}}>Save Keys →</button>
+              <button onClick={()=>setShowSettings(false)} style={{background:T.bgRaised,color:T.textDim,border:"none",borderRadius:6,padding:"7px 14px",fontSize:13}}>Cancel</button>
+              <button onClick={saveKeys} style={{background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"7px 14px",fontSize:13,fontWeight:"bold"}}>Save Keys →</button>
             </div>
           </div>
         </div>
@@ -1025,10 +1025,10 @@ finally:
               <span style={{fontSize:15}}>🤖</span>
               <div>
                 <div style={{fontSize:13,fontWeight:"bold",color:T.text}}>Python Tutor</div>
-                <div style={{fontSize:10,color:T.textMut}}>{activeLesson?`On: ${activeLesson.title}`:"Ask me anything"}</div>
+                <div style={{fontSize:12,color:T.textMut}}>{activeLesson?`On: ${activeLesson.title}`:"Ask me anything"}</div>
               </div>
             </div>
-            <div style={{fontSize:9,color:T.textMut,background:T.bgRaised,padding:"2px 6px",borderRadius:5}}>via {activeProvider}</div>
+            <div style={{fontSize:13,color:T.textMut,background:T.bgRaised,padding:"2px 6px",borderRadius:5}}>via {activeProvider}</div>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:10,display:"flex",flexDirection:"column",gap:7}}>
             {chatMessages.map((msg,i)=>(
