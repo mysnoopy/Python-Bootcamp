@@ -7,13 +7,39 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'JetBrains Mono', 'Courier New', monospace; background: #1e1e2e; color: #e2e8ef; height: 100vh; overflow: hidden; }
-  ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: #13131f; } ::-webkit-scrollbar-thumb { background: #333350; border-radius: 3px; }
-  textarea { resize: none; outline: none; }
+  body { font-family: 'JetBrains Mono', 'Courier New', monospace; height: 100vh; overflow: hidden; transition: background 0.2s, color 0.2s; }
+  ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: var(--bg-deep); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   input:focus { outline: none; }
   button { font-family: 'JetBrains Mono', 'Courier New', monospace; cursor: pointer; }
+
+  /* Dark theme (default) */
+  body.dark { --bg: #1e1e2e; --bg-deep: #13131f; --bg-mid: #2a2a3e; --bg-raised: #252538; --border: #333350; --border-hover: #4a5568; --text: #e2e8ef; --text-dim: #94a3b8; --text-muted: #64748b; --text-faint: #4a5568; --code-bg: #1a1a2e; }
+  /* Light theme */
+  body.light { --bg: #f8fafc; --bg-deep: #f1f5f9; --bg-mid: #ffffff; --bg-raised: #f1f5f9; --border: #e2e8f0; --border-hover: #94a3b8; --text: #1e293b; --text-dim: #475569; --text-muted: #64748b; --text-faint: #94a3b8; --code-bg: #f8fafc; }
+
+  .CodeMirror { height: 100% !important; font-family: 'JetBrains Mono','Courier New',monospace !important; font-size: 11px !important; line-height: 1.7 !important; }
+  .cm-wrap { height: 100%; }
+
+  /* Mobile layout */
+  @media (max-width: 680px) {
+    .sidebar      { display: none !important; }
+    .lesson-wrap  { flex-direction: column !important; }
+    .lesson-pane  { min-height: 45vh; max-height: 50vh; flex: none !important; overflow-y: auto; }
+    .editor-pane  { width: 100% !important; min-width: 0 !important; flex: 1; }
+    .vdiv         { display: none !important; }
+    .hdr-sub      { display: none !important; }
+    .phase-grid   { grid-template-columns: 1fr !important; }
+  }
 </style>
 </head>
 <body>
@@ -409,51 +435,133 @@ const QUIZ = [
   {q:"What is few-shot prompting?", a:"Giving the AI examples before asking", opts:["Using a small model","Giving the AI examples before asking","Limiting token count","Asking multiple questions"]},
 ];
 
+
 function App() {
-  const [activePhase, setActivePhase] = useState(0);
-  const [activeLesson, setActiveLesson] = useState(null);
-  const [view, setView] = useState("curriculum");
-  const [completed, setCompleted] = useState({});
-  const [showExp, setShowExp] = useState(true);
-  const [copied, setCopied] = useState(null);
-  const [quiz, setQuiz] = useState({active:false,q:0,score:0,answered:null});
-  const [code, setCode] = useState("");
-  const [output, setOutput] = useState("");
-  const [running, setRunning] = useState(false);
-  const [pyReady, setPyReady] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
+  /* ── THEME ─────────────────────────────────────────── */
+  const [theme, setThemeRaw] = useState(() => localStorage.getItem("bc_theme") || "dark");
+  const setTheme = (t) => { localStorage.setItem("bc_theme", t); setThemeRaw(t); document.body.className = t; };
+  useEffect(() => { document.body.className = theme; }, [theme]);
+  const D = theme === "dark";
+  const T = {
+    bg:       D ? "#1e1e2e" : "#f8fafc",
+    bgDeep:   D ? "#13131f" : "#f1f5f9",
+    bgMid:    D ? "#2a2a3e" : "#ffffff",
+    bgRaised: D ? "#252538" : "#f1f5f9",
+    border:   D ? "#333350" : "#e2e8f0",
+    borderHv: D ? "#4a5568" : "#94a3b8",
+    text:     D ? "#e2e8ef" : "#1e293b",
+    textDim:  D ? "#94a3b8" : "#475569",
+    textMut:  D ? "#64748b" : "#64748b",
+    textFnt:  D ? "#4a5568" : "#94a3b8",
+    codeBg:   D ? "#1a1a2e" : "#f8fafc",
+  };
+
+  /* ── PERSISTED STATE ────────────────────────────────── */
+  const [activePhase,    setActivePhaseRaw]  = useState(() => parseInt(localStorage.getItem("bc_phase") || "0"));
+  const [activeLesson,   setActiveLessonRaw] = useState(() => { try { const s=localStorage.getItem("bc_lesson"); return s?JSON.parse(s):null; } catch(e){return null;} });
+  const [completed,      setCompletedRaw]    = useState(() => { try { const s=localStorage.getItem("bc_completed"); return s?JSON.parse(s):{}; } catch(e){return {};} });
+  const [bestScore,      setBestScore]       = useState(() => parseInt(localStorage.getItem("bc_bestscore") || "0"));
+
+  const setActivePhase  = (v)  => { localStorage.setItem("bc_phase",   v);                        setActivePhaseRaw(v); };
+  const setActiveLesson = (v)  => { localStorage.setItem("bc_lesson",  JSON.stringify(v));        setActiveLessonRaw(v); };
+  const setCompleted    = (fn) => { setCompletedRaw(prev => { const next = typeof fn==="function"?fn(prev):fn; localStorage.setItem("bc_completed", JSON.stringify(next)); return next; }); };
+
+  /* ── UI STATE ───────────────────────────────────────── */
+  const [view,         setView]         = useState("curriculum");
+  const [showExp,      setShowExp]      = useState(true);
+  const [copied,       setCopied]       = useState(null);
+  const [quiz,         setQuiz]         = useState({active:false,q:0,score:0,answered:null});
+  const [code,         setCode]         = useState("");
+  const [output,       setOutput]       = useState("");
+  const [running,      setRunning]      = useState(false);
+  const [pyReady,      setPyReady]      = useState(false);
+  const [chatOpen,     setChatOpen]     = useState(false);
   const [chatMessages, setChatMessages] = useState([{role:"assistant",text:"👋 Hi! I'm your Python tutor. Ask me anything about Python or the lesson you're on!"}]);
-  const [chatInput, setChatInput] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
+  const [chatInput,    setChatInput]    = useState("");
+  const [chatLoading,  setChatLoading]  = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem("gemini_key") || "");
+  const [geminiKey,    setGeminiKey]    = useState(() => localStorage.getItem("gemini_key") || "");
   const [anthropicKey, setAnthropicKey] = useState(() => localStorage.getItem("anthropic_key") || "");
-  const [openaiKey, setOpenaiKey] = useState(() => localStorage.getItem("openai_key") || "");
-  const [keyInput, setKeyInput] = useState({gemini:"", anthropic:"", openai:""});
-  const pyodideRef = useRef(null);
-  const textareaRef = useRef(null);
-  const chatEndRef = useRef(null);
+  const [openaiKey,    setOpenaiKey]    = useState(() => localStorage.getItem("openai_key") || "");
+  const [keyInput,     setKeyInput]     = useState({gemini:"", anthropic:"", openai:""});
+  const [editorWidth,  setEditorWidth]  = useState(420);
+  const [outputHeight, setOutputHeight] = useState(160);
 
+  /* ── REFS ───────────────────────────────────────────── */
+  const pyodideRef  = useRef(null);
+  const chatEndRef  = useRef(null);
+  const cmRef       = useRef(null);   // CodeMirror instance
+  const cmElRef     = useRef(null);   // mount element
+  const dragVRef    = useRef(null);
+  const dragHRef    = useRef(null);
+
+  /* ── COMPUTED ───────────────────────────────────────── */
   const totalLessons = curriculum.reduce((a,p) => a + p.lessons.length, 0);
-  const doneCount = Object.keys(completed).length;
-  const pct = Math.round((doneCount/totalLessons)*100);
-  const phase = curriculum[activePhase];
+  const doneCount    = Object.keys(completed).length;
+  const pct          = Math.round((doneCount / totalLessons) * 100);
+  const phase        = curriculum[activePhase];
+  const hasKey       = geminiKey || openaiKey || anthropicKey;
+  const activeProvider = geminiKey ? "Gemini" : openaiKey ? "OpenAI" : anthropicKey ? "Anthropic" : null;
 
+  /* ── PYODIDE ────────────────────────────────────────── */
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js";
-    script.onload = async () => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js";
+    s.onload = async () => {
       try {
         const py = await window.loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.24.1/full/"});
         pyodideRef.current = py;
         setPyReady(true);
       } catch(e) { console.error(e); }
     };
-    document.head.appendChild(script);
+    document.head.appendChild(s);
   }, []);
 
+  /* ── CODEMIRROR INIT ────────────────────────────────── */
+  useEffect(() => {
+    if (!cmElRef.current || cmRef.current) return;
+    cmRef.current = window.CodeMirror(cmElRef.current, {
+      value: code,
+      mode: "python",
+      theme: D ? "dracula" : "eclipse",
+      lineNumbers: true,
+      matchBrackets: true,
+      autoCloseBrackets: true,
+      indentUnit: 4,
+      tabSize: 4,
+      extraKeys: { Tab: cm => cm.replaceSelection("    ") },
+    });
+    cmRef.current.on("change", cm => setCode(cm.getValue()));
+  });
+
+  useEffect(() => {
+    if (cmRef.current) cmRef.current.setOption("theme", D ? "dracula" : "eclipse");
+  }, [theme]);
+
+  useEffect(() => {
+    if (cmRef.current && cmRef.current.getValue() !== code) cmRef.current.setValue(code);
+  }, [code]);
+
+  /* ── RESTORE SAVED LESSON ON FIRST LOAD ────────────── */
+  useEffect(() => {
+    if (activeLesson) {
+      const saved = curriculum.flatMap(p=>p.lessons).find(l=>l.id===activeLesson.id);
+      if (saved) loadLessonCode(saved);
+    }
+  // eslint-disable-next-line
+  }, []);
+
+  /* ── HELPERS ────────────────────────────────────────── */
+  const loadLessonCode = (lesson) => {
+    const c = lesson.lines.filter(l=>l.code!==null).map(l=>l.code).join("\n").trim();
+    setCode(c);
+    if (cmRef.current) cmRef.current.setValue(c);
+    setOutput("");
+  };
+
   const runCode = async () => {
-    if (!pyodideRef.current || !code.trim()) return;
+    const src = cmRef.current ? cmRef.current.getValue() : code;
+    if (!pyodideRef.current || !src.trim()) return;
     setRunning(true); setOutput("");
     try {
       await pyodideRef.current.runPythonAsync(`
@@ -463,7 +571,7 @@ _buf = StringIO()
 sys.stdout = _buf
 sys.stderr = _buf
 try:
-${code.split("\n").map(l => "    "+l).join("\n")}
+${src.split("\n").map(l=>"    "+l).join("\n")}
 except Exception as e:
     print(f"❌ Error: {e}")
 finally:
@@ -476,142 +584,138 @@ finally:
     setRunning(false);
   };
 
-  const loadLessonCode = (lesson) => {
-    setCode(lesson.lines.filter(l=>l.code!==null).map(l=>l.code).join("\n").trim());
-    setOutput("");
-  };
-
   const copyCode = (text, id) => {
     navigator.clipboard.writeText(text).catch(()=>{});
-    setCopied(id); setTimeout(()=>setCopied(null),1500);
-  };
-
-  const handleTabKey = (e) => {
-    if (e.key==="Tab") {
-      e.preventDefault();
-      const s=e.target.selectionStart, end=e.target.selectionEnd;
-      const newCode = code.substring(0,s)+"    "+code.substring(end);
-      setCode(newCode);
-      setTimeout(()=>{ if(textareaRef.current){textareaRef.current.selectionStart=textareaRef.current.selectionEnd=s+4;}},0);
-    }
+    setCopied(id); setTimeout(()=>setCopied(null), 1500);
   };
 
   const saveKeys = () => {
-    if (keyInput.gemini) { localStorage.setItem("gemini_key", keyInput.gemini); setGeminiKey(keyInput.gemini); }
-    if (keyInput.anthropic) { localStorage.setItem("anthropic_key", keyInput.anthropic); setAnthropicKey(keyInput.anthropic); }
-    if (keyInput.openai) { localStorage.setItem("openai_key", keyInput.openai); setOpenaiKey(keyInput.openai); }
+    if (keyInput.gemini.trim())    { localStorage.setItem("gemini_key",    keyInput.gemini.trim());    setGeminiKey(keyInput.gemini.trim()); }
+    if (keyInput.openai.trim())    { localStorage.setItem("openai_key",    keyInput.openai.trim());    setOpenaiKey(keyInput.openai.trim()); }
+    if (keyInput.anthropic.trim()) { localStorage.setItem("anthropic_key", keyInput.anthropic.trim()); setAnthropicKey(keyInput.anthropic.trim()); }
     setKeyInput({gemini:"", anthropic:"", openai:""});
     setShowSettings(false);
   };
 
-  const sendChat = async () => {
-    if (!chatInput.trim() || chatLoading) return;
-    const userMsg = chatInput.trim();
-    const activeKey = geminiKey || openaiKey || anthropicKey;
-    if (!activeKey) { setShowSettings(true); return; }
-    setChatInput("");
-    setChatMessages(prev=>[...prev,{role:"user",text:userMsg}]);
-    setChatLoading(true);
-    const lessonCtx = activeLesson ? `Student is on lesson: "${activeLesson.title}" — ${activeLesson.project}.` : "Student is browsing the Python Bootcamp.";
-    const systemPrompt = `You are a friendly Python tutor in a bootcamp app. ${lessonCtx} Be concise (under 120 words). Use short code examples when helpful. Be encouraging.`;
-    const history = chatMessages.slice(1).map(m=>({role:m.role==="assistant"?"assistant":"user",content:m.text}));
-    try {
-      let reply = "";
-      if (geminiKey) {
-        const geminiMessages = [...history,{role:"user",content:userMsg}].map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,{
-          method:"POST", headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({system_instruction:{parts:[{text:systemPrompt}]},contents:geminiMessages,generationConfig:{maxOutputTokens:400}})
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-      } else if (openaiKey) {
-        const res = await fetch("https://api.openai.com/v1/chat/completions",{
-          method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${openaiKey}`},
-          body:JSON.stringify({model:"gpt-4o-mini",max_tokens:400,messages:[{role:"system",content:systemPrompt},...history,{role:"user",content:userMsg}]})
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        reply = data?.choices?.[0]?.message?.content || "No response";
-      } else if (anthropicKey) {
-        const res = await fetch("https://api.anthropic.com/v1/messages",{
-          method:"POST", headers:{"Content-Type":"application/json","x-api-key":anthropicKey,"anthropic-version":"2023-06-01"},
-          body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:400,system:systemPrompt,messages:[...history,{role:"user",content:userMsg}]})
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        reply = data?.content?.[0]?.text || "No response";
-      }
-      setChatMessages(prev=>[...prev,{role:"assistant",text:reply}]);
-    } catch(err) {
-      setChatMessages(prev=>[...prev,{role:"assistant",text:`❌ ${err.message}`}]);
-    }
-    setChatLoading(false);
-    setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:"smooth"}),100);
+  /* ── DRAG RESIZE ────────────────────────────────────── */
+  const startVDrag = (e) => {
+    e.preventDefault();
+    dragVRef.current = { startX: e.clientX, startW: editorWidth };
+    const onMove = (ev) => setEditorWidth(Math.max(260, Math.min(700, dragVRef.current.startW + dragVRef.current.startX - ev.clientX)));
+    const onUp   = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+  };
+  const startHDrag = (e) => {
+    e.preventDefault();
+    dragHRef.current = { startY: e.clientY, startH: outputHeight };
+    const onMove = (ev) => setOutputHeight(Math.max(60, Math.min(500, dragHRef.current.startH + dragHRef.current.startY - ev.clientY)));
+    const onUp   = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
   };
 
-  const hasKey = geminiKey || openaiKey || anthropicKey;
-  const activeProvider = geminiKey ? "Gemini" : openaiKey ? "OpenAI" : anthropicKey ? "Anthropic" : null;
+  /* ── CHAT ───────────────────────────────────────────── */
+  const sendChat = async () => {
+    if (!chatInput.trim() || chatLoading) return;
+    const userMsg  = chatInput.trim();
+    const history  = chatMessages;
+    const lessonCtx = activeLesson ? `Current lesson: "${activeLesson.title}" - ${activeLesson.project}` : "No lesson active.";
+    const systemPrompt = `You are a friendly Python tutor. Keep responses concise (3-5 sentences max). ${lessonCtx} Only answer Python/programming questions.`;
+    setChatMessages(p=>[...p,{role:"user",text:userMsg}]);
+    setChatInput(""); setChatLoading(true);
+    try {
+      let reply = "";
+      const msgs = [...history,{role:"user",text:userMsg}];
+      if (geminiKey) {
+        const gMsgs = msgs.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.text}]}));
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+          {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system_instruction:{parts:[{text:systemPrompt}]},contents:gMsgs,generationConfig:{maxOutputTokens:400}})});
+        const d = await r.json(); if (d.error) throw new Error(d.error.message);
+        reply = d?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      } else if (openaiKey) {
+        const r = await fetch("https://api.openai.com/v1/chat/completions",
+          {method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${openaiKey}`},
+           body:JSON.stringify({model:"gpt-4o-mini",max_tokens:400,messages:[{role:"system",content:systemPrompt},...msgs.map(m=>({role:m.role,content:m.text}))]})});
+        const d = await r.json(); if (d.error) throw new Error(d.error.message);
+        reply = d?.choices?.[0]?.message?.content || "No response";
+      } else if (anthropicKey) {
+        const r = await fetch("https://api.anthropic.com/v1/messages",
+          {method:"POST",headers:{"Content-Type":"application/json","x-api-key":anthropicKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+           body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:400,system:systemPrompt,messages:msgs.map(m=>({role:m.role,content:m.text}))})});
+        const d = await r.json(); if (d.error) throw new Error(d.error.message||d.error);
+        reply = d?.content?.[0]?.text || "No response";
+      }
+      setChatMessages(p=>[...p,{role:"assistant",text:reply}]);
+    } catch(e) { setChatMessages(p=>[...p,{role:"assistant",text:`❌ Error: ${e.message}`}]); }
+    setChatLoading(false);
+    setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:"smooth"}), 100);
+  };
 
+  /* ── RENDER ─────────────────────────────────────────── */
   return (
-    <div style={{fontFamily:"'JetBrains Mono','Courier New',monospace",background:"#1e1e2e",height:"100vh",color:"#e2e8ef",display:"flex",flexDirection:"column"}}>
+    <div style={{fontFamily:"'JetBrains Mono','Courier New',monospace",background:T.bg,height:"100vh",color:T.text,display:"flex",flexDirection:"column",transition:"background 0.2s,color 0.2s"}}>
 
-      {/* Header */}
-      <div style={{background:"#13131f",borderBottom:"1px solid #333350",padding:"8px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:20}}>🐍</span>
-          <div>
-            <div style={{fontSize:13,fontWeight:"bold",color:"#00D084",letterSpacing:1}}>PYTHON BOOTCAMP</div>
-            <div style={{fontSize:9,color:"#4a5568"}}>Line-by-Line • Built-in Editor • Run Code in Browser</div>
+      {/* ── HEADER ── */}
+      <div style={{background:T.bgDeep,borderBottom:`1px solid ${T.border}`,padding:"7px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,gap:8}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
+          <span style={{fontSize:18,flexShrink:0}}>🐍</span>
+          <div style={{minWidth:0}}>
+            <div style={{fontSize:12,fontWeight:"bold",color:"#00D084",letterSpacing:1,whiteSpace:"nowrap"}}>PYTHON BOOTCAMP</div>
+            <div className="hdr-sub" style={{fontSize:9,color:T.textFnt}}>Line-by-Line · Built-in Editor · Run in Browser</div>
           </div>
         </div>
-        <div style={{display:"flex",gap:6,alignItems:"center"}}>
-          <div style={{fontSize:10,color:pyReady?"#00D084":"#F59E0B"}}>{pyReady?"🟢 Python Ready":"⏳ Loading..."}</div>
-          <button onClick={()=>setShowSettings(true)} style={{background:"#333350",color:hasKey?"#00D084":"#F59E0B",border:"none",borderRadius:5,padding:"3px 8px",fontSize:10,cursor:"pointer"}}>
+        <div style={{display:"flex",gap:5,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
+          <span style={{fontSize:10,color:pyReady?"#00D084":"#F59E0B",flexShrink:0}}>{pyReady?"🟢":"⏳"}</span>
+          <button onClick={()=>setShowSettings(true)} style={{background:T.bgRaised,color:hasKey?"#00D084":"#F59E0B",border:`1px solid ${T.border}`,borderRadius:5,padding:"3px 8px",fontSize:10,flexShrink:0}}>
             {hasKey?`⚙️ ${activeProvider} ✅`:"⚙️ Setup AI"}
           </button>
-          <div style={{background:"#252538",borderRadius:20,padding:"2px 8px",fontSize:10,color:"#00D084"}}>{doneCount}/{totalLessons} ✅</div>
-          <div style={{background:"#252538",borderRadius:20,padding:"2px 8px",fontSize:10,color:"#F59E0B"}}>{pct}%</div>
+          <button onClick={()=>setTheme(D?"light":"dark")} style={{background:T.bgRaised,color:T.textDim,border:`1px solid ${T.border}`,borderRadius:5,padding:"3px 8px",fontSize:10,flexShrink:0}}>
+            {D?"☀️":"🌙"}
+          </button>
+          <div title="Completed" style={{background:T.bgRaised,borderRadius:20,padding:"2px 8px",fontSize:10,color:"#00D084",flexShrink:0}}>{doneCount}/{totalLessons} ✅</div>
+          <div title="Progress"  style={{background:T.bgRaised,borderRadius:20,padding:"2px 8px",fontSize:10,color:"#F59E0B",flexShrink:0}}>{pct}%</div>
+          {doneCount>0 && (
+            <button title="Reset progress" onClick={()=>{ if(window.confirm("Reset all lesson progress?")){ ["bc_phase","bc_lesson","bc_completed","bc_bestscore"].forEach(k=>localStorage.removeItem(k)); setActivePhaseRaw(0);setActiveLessonRaw(null);setCompletedRaw({});setBestScore(0);setQuiz({active:false,q:0,score:0,answered:null}); }}}
+              style={{background:"transparent",color:T.textFnt,border:"none",fontSize:10,padding:"2px 4px"}}>🗑</button>
+          )}
         </div>
       </div>
 
-      {/* Progress */}
-      <div style={{height:2,background:"#21262d",flexShrink:0}}>
+      {/* ── PROGRESS BAR ── */}
+      <div style={{height:2,background:T.bgRaised,flexShrink:0}}>
         <div style={{height:"100%",width:`${pct}%`,background:"linear-gradient(90deg,#00D084,#4ECDC4)",transition:"width 0.5s"}}/>
       </div>
 
-      {/* Top Nav */}
-      <div style={{background:"#13131f",borderBottom:"1px solid #333350",padding:"5px 16px",display:"flex",gap:6,flexShrink:0}}>
+      {/* ── TOP NAV ── */}
+      <div style={{background:T.bgDeep,borderBottom:`1px solid ${T.border}`,padding:"5px 14px",display:"flex",gap:5,flexShrink:0}}>
         {[{id:"curriculum",label:"📚 Lessons"},{id:"cheatsheet",label:"📋 Cheat Sheet"},{id:"quiz",label:"🧠 Quiz"}].map(t=>(
           <button key={t.id} onClick={()=>{setView(t.id);setActiveLesson(null);}}
-            style={{background:view===t.id?"#00D084":"transparent",color:view===t.id?"#000":"#a0aec0",border:`1px solid ${view===t.id?"#00D084":"#333350"}`,borderRadius:5,padding:"4px 10px",fontSize:10,cursor:"pointer",fontWeight:view===t.id?"bold":"normal"}}>
+            style={{background:view===t.id?"#00D084":"transparent",color:view===t.id?"#000":T.textMut,border:`1px solid ${view===t.id?"#00D084":T.border}`,borderRadius:5,padding:"4px 10px",fontSize:10,fontWeight:view===t.id?"bold":"normal"}}>
             {t.label}
           </button>
         ))}
       </div>
 
-      {/* Body */}
+      {/* ── BODY ── */}
       <div style={{display:"flex",flex:1,overflow:"hidden"}}>
 
-        {/* Sidebar */}
+        {/* SIDEBAR */}
         {view==="curriculum" && (
-          <div style={{width:185,borderRight:"1px solid #333350",overflowY:"auto",flexShrink:0,background:"#13131f"}}>
+          <div className="sidebar" style={{width:180,borderRight:`1px solid ${T.border}`,overflowY:"auto",flexShrink:0,background:T.bgDeep}}>
             {curriculum.map((p,idx)=>(
               <div key={p.id}>
                 <button onClick={()=>{setActivePhase(idx);setActiveLesson(null);}}
-                  style={{width:"100%",background:activePhase===idx?"#252538":"transparent",border:"none",borderLeft:`2px solid ${activePhase===idx?p.color:"transparent"}`,padding:"8px 12px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{fontSize:14}}>{p.icon}</span>
+                  style={{width:"100%",background:activePhase===idx?T.bgRaised:"transparent",border:"none",borderLeft:`3px solid ${activePhase===idx?p.color:"transparent"}`,padding:"8px 10px",textAlign:"left",display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:13}}>{p.icon}</span>
                   <div>
-                    <div style={{fontSize:10,color:"#94a3b8"}}>{p.phase}</div>
-                    <div style={{fontSize:12,color:activePhase===idx?p.color:"#e2e8ef"}}>{p.title}</div>
+                    <div style={{fontSize:9,color:T.textMut}}>{p.phase}</div>
+                    <div style={{fontSize:11,color:activePhase===idx?p.color:T.text,fontWeight:activePhase===idx?"bold":"normal"}}>{p.title}</div>
                   </div>
                 </button>
                 {activePhase===idx && p.lessons.map(l=>(
                   <button key={l.id} onClick={()=>{setActiveLesson(l);loadLessonCode(l);}}
-                    style={{width:"100%",background:activeLesson?.id===l.id?"#333350":"transparent",border:"none",padding:"5px 12px 5px 30px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:5}}>
-                    <span style={{fontSize:10}}>{completed[l.id]?"✅":"⬜"}</span>
-                    <span style={{fontSize:11,color:activeLesson?.id===l.id?"#e2e8ef":"#cbd5e1"}}>{l.title}</span>
+                    style={{width:"100%",background:activeLesson?.id===l.id?T.border:"transparent",border:"none",padding:"5px 10px 5px 28px",textAlign:"left",display:"flex",alignItems:"center",gap:5}}>
+                    <span style={{fontSize:9}}>{completed[l.id]?"✅":"⬜"}</span>
+                    <span style={{fontSize:10,color:activeLesson?.id===l.id?T.text:T.textDim,fontWeight:activeLesson?.id===l.id?"bold":"normal"}}>{l.title}</span>
                   </button>
                 ))}
               </div>
@@ -619,29 +723,29 @@ finally:
           </div>
         )}
 
-        {/* Main */}
+        {/* MAIN PANEL */}
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
 
-          {/* Phase overview */}
+          {/* PHASE OVERVIEW */}
           {view==="curriculum" && !activeLesson && (
-            <div style={{padding:20,overflowY:"auto",flex:1}}>
-              <div style={{fontSize:17,fontWeight:"bold",color:phase.color,marginBottom:4}}>{phase.icon} {phase.phase}: {phase.title}</div>
-              <div style={{fontSize:11,color:"#64748b",marginBottom:16}}>Select a lesson to begin →</div>
-              <div style={{display:"grid",gap:12}}>
+            <div style={{padding:18,overflowY:"auto",flex:1,background:T.bg}}>
+              <div style={{fontSize:16,fontWeight:"bold",color:phase.color,marginBottom:3}}>{phase.icon} {phase.phase}: {phase.title}</div>
+              <div style={{fontSize:11,color:T.textMut,marginBottom:14}}>Select a lesson to begin →</div>
+              <div className="phase-grid" style={{display:"grid",gap:10}}>
                 {phase.lessons.map(l=>(
                   <div key={l.id} onClick={()=>{setActiveLesson(l);loadLessonCode(l);}}
-                    style={{background:"#2a2a3e",border:`1px solid ${completed[l.id]?phase.color:"#333350"}`,borderRadius:8,padding:16,cursor:"pointer"}}
+                    style={{background:T.bgMid,border:`1px solid ${completed[l.id]?phase.color:T.border}`,borderRadius:8,padding:14,cursor:"pointer",transition:"border-color 0.15s"}}
                     onMouseEnter={e=>e.currentTarget.style.borderColor=phase.color}
-                    onMouseLeave={e=>e.currentTarget.style.borderColor=completed[l.id]?phase.color:"#333350"}>
-                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                    onMouseLeave={e=>e.currentTarget.style.borderColor=completed[l.id]?phase.color:T.border}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:7}}>
                       <div>
-                        <div style={{fontSize:13,fontWeight:"bold",color:"#e2e8ef",marginBottom:2}}>{l.title}</div>
+                        <div style={{fontSize:13,fontWeight:"bold",color:T.text,marginBottom:2}}>{l.title}</div>
                         <div style={{fontSize:11,color:phase.color}}>{l.project}</div>
                       </div>
-                      <span style={{fontSize:10,color:"#64748b",background:"#333350",padding:"2px 7px",borderRadius:8,height:"fit-content"}}>⏱ {l.duration}</span>
+                      <span style={{fontSize:10,color:T.textMut,background:T.bgRaised,padding:"2px 7px",borderRadius:8,height:"fit-content",flexShrink:0}}>⏱ {l.duration}</span>
                     </div>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
-                      {l.concepts.map(c=><span key={c} style={{background:"#1e1e2e",border:`1px solid ${phase.color}33`,color:phase.color,padding:"1px 6px",borderRadius:3,fontSize:9}}>{c}</span>)}
+                    <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                      {l.concepts.map(c=><span key={c} style={{background:T.bg,border:`1px solid ${phase.color}44`,color:phase.color,padding:"1px 5px",borderRadius:3,fontSize:9}}>{c}</span>)}
                     </div>
                   </div>
                 ))}
@@ -649,46 +753,46 @@ finally:
             </div>
           )}
 
-          {/* Lesson + Editor */}
+          {/* LESSON + EDITOR */}
           {view==="curriculum" && activeLesson && (
-            <div style={{display:"flex",flex:1,overflow:"hidden"}}>
-              {/* Left: explanations */}
-              <div style={{flex:1,overflowY:"auto",borderRight:"1px solid #333350"}}>
-                <div style={{padding:"10px 14px",borderBottom:"1px solid #333350",display:"flex",justifyContent:"space-between",alignItems:"center",background:"#13131f"}}>
+            <div className="lesson-wrap" style={{display:"flex",flex:1,overflow:"hidden"}}>
+
+              {/* LEFT: Explanations */}
+              <div className="lesson-pane" style={{flex:1,overflowY:"auto",minWidth:180,background:T.bg}}>
+                <div style={{padding:"9px 12px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:T.bgDeep,flexShrink:0}}>
                   <div>
-                    <button onClick={()=>setActiveLesson(null)} style={{background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:10,padding:0,marginBottom:3}}>← Back</button>
-                    <div style={{fontSize:13,fontWeight:"bold",color:"#e2e8ef"}}>{activeLesson.title}</div>
+                    <button onClick={()=>setActiveLesson(null)} style={{background:"none",border:"none",color:T.textDim,fontSize:10,padding:0,marginBottom:2}}>← Back</button>
+                    <div style={{fontSize:13,fontWeight:"bold",color:T.text}}>{activeLesson.title}</div>
                     <div style={{fontSize:11,color:phase.color}}>{activeLesson.project}</div>
                   </div>
-                  <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>setShowExp(!showExp)}
-                      style={{background:showExp?phase.color:"#333350",color:showExp?"#000":"#94a3b8",border:"none",borderRadius:5,padding:"3px 7px",fontSize:9,cursor:"pointer"}}>
+                  <div style={{display:"flex",gap:5,flexShrink:0}}>
+                    <button onClick={()=>setShowExp(!showExp)} style={{background:showExp?phase.color:T.bgRaised,color:showExp?"#000":T.textDim,border:"none",borderRadius:5,padding:"3px 7px",fontSize:9}}>
                       {showExp?"💡 ON":"💡 OFF"}
                     </button>
                     <button onClick={()=>setCompleted(p=>({...p,[activeLesson.id]:true}))}
-                      style={{background:completed[activeLesson.id]?"#333350":phase.color,color:completed[activeLesson.id]?"#64748b":"#000",border:"none",borderRadius:5,padding:"3px 7px",fontSize:9,cursor:"pointer"}}>
+                      style={{background:completed[activeLesson.id]?T.bgRaised:phase.color,color:completed[activeLesson.id]?T.textMut:"#000",border:"none",borderRadius:5,padding:"3px 7px",fontSize:9}}>
                       {completed[activeLesson.id]?"✅ Done":"Mark Done"}
                     </button>
                   </div>
                 </div>
-                <div style={{margin:"8px 12px",background:"#2d2a1e",border:"1px solid #F59E0B44",borderRadius:6,padding:"7px 10px"}}>
+                <div style={{margin:"7px 10px",background:D?"#2d2a1e":"#fffbeb",border:"1px solid #F59E0B44",borderRadius:6,padding:"6px 10px"}}>
                   <div style={{color:"#F59E0B",fontSize:10,lineHeight:1.6}}>{activeLesson.memTrick}</div>
                 </div>
-                <div style={{margin:"0 12px 12px"}}>
+                <div style={{margin:"0 10px 12px"}}>
                   {activeLesson.lines.map((line,i)=>{
-                    if(!line.code && line.exp===null) return <div key={i} style={{height:6}}/>;
+                    if(!line.code && line.exp===null) return <div key={i} style={{height:5}}/>;
                     const icon=line.exp?line.exp[0]:null;
                     const iconColor=ICON_COLORS[icon]||"#8b949e";
                     return (
-                      <div key={i} style={{background:"#252538",marginBottom:1,borderRadius:3,overflow:"hidden"}}>
+                      <div key={i} style={{background:T.bgRaised,marginBottom:1,borderRadius:3,overflow:"hidden"}}>
                         <div style={{display:"flex"}}>
-                          <div style={{width:26,flexShrink:0,padding:"7px 0",textAlign:"center",fontSize:9,color:"#4a5568",borderRight:"1px solid #1e1e2e"}}>{i+1}</div>
-                          <div style={{flex:1,padding:"7px 9px"}}>
-                            <pre style={{margin:0,fontSize:11,color:"#e2e8ef",whiteSpace:"pre-wrap",lineHeight:1.5}}>{line.code||" "}</pre>
+                          <div style={{width:24,flexShrink:0,padding:"6px 0",textAlign:"center",fontSize:9,color:T.textFnt,borderRight:`1px solid ${T.bg}`}}>{i+1}</div>
+                          <div style={{flex:1,padding:"6px 8px"}}>
+                            <pre style={{margin:0,fontSize:11,color:T.text,whiteSpace:"pre-wrap",lineHeight:1.5}}>{line.code||" "}</pre>
                             {showExp && line.exp && (
-                              <div style={{marginTop:3,padding:"4px 7px",background:"#1e1e2e",borderRadius:3,borderLeft:`2px solid ${iconColor}`,display:"flex",gap:5}}>
+                              <div style={{marginTop:3,padding:"4px 7px",background:T.bg,borderRadius:3,borderLeft:`2px solid ${iconColor}`,display:"flex",gap:5}}>
                                 <span style={{fontSize:11,flexShrink:0}}>{icon}</span>
-                                <span style={{fontSize:10,color:"#94a3b8",lineHeight:1.6}}>{line.exp.slice(2)}</span>
+                                <span style={{fontSize:10,color:T.textDim,lineHeight:1.6}}>{line.exp.slice(2)}</span>
                               </div>
                             )}
                           </div>
@@ -699,63 +803,93 @@ finally:
                 </div>
               </div>
 
-              {/* Right: Editor */}
-              <div style={{width:400,display:"flex",flexDirection:"column",background:"#1e1e2e",flexShrink:0}}>
-                <div style={{padding:"7px 10px",borderBottom:"1px solid #333350",display:"flex",justifyContent:"space-between",alignItems:"center",background:"#13131f"}}>
-                  <div style={{fontSize:10,color:"#94a3b8"}}>📝 Editor</div>
-                  <div style={{display:"flex",gap:5}}>
-                    <button onClick={()=>loadLessonCode(activeLesson)} style={{background:"#333350",color:"#94a3b8",border:"none",borderRadius:4,padding:"2px 7px",fontSize:9,cursor:"pointer"}}>↺ Reset</button>
-                    <button onClick={()=>copyCode(code,"editor")} style={{background:copied==="editor"?"#00D084":"#333350",color:copied==="editor"?"#000":"#94a3b8",border:"none",borderRadius:4,padding:"2px 7px",fontSize:9,cursor:"pointer"}}>{copied==="editor"?"✅":"📋"}</button>
+              {/* VERTICAL DIVIDER */}
+              <div className="vdiv" onMouseDown={startVDrag}
+                style={{width:5,background:T.border,cursor:"col-resize",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}
+                onMouseEnter={e=>e.currentTarget.style.background=T.borderHv}
+                onMouseLeave={e=>e.currentTarget.style.background=T.border}>
+                <div style={{width:1,height:28,background:T.textFnt,borderRadius:1,pointerEvents:"none"}}/>
+              </div>
+
+              {/* RIGHT: Editor */}
+              <div className="editor-pane" style={{width:editorWidth,display:"flex",flexDirection:"column",background:T.codeBg,flexShrink:0,minWidth:180}}>
+                <div style={{padding:"6px 10px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:T.bgDeep,flexShrink:0}}>
+                  <div style={{fontSize:10,color:T.textDim}}>📝 Editor</div>
+                  <div style={{display:"flex",gap:4}}>
+                    <button onClick={()=>loadLessonCode(activeLesson)} style={{background:T.bgRaised,color:T.textDim,border:"none",borderRadius:4,padding:"2px 7px",fontSize:9}}>↺ Reset</button>
+                    <button onClick={()=>copyCode(cmRef.current?cmRef.current.getValue():code,"editor")} style={{background:copied==="editor"?"#00D084":T.bgRaised,color:copied==="editor"?"#000":T.textDim,border:"none",borderRadius:4,padding:"2px 7px",fontSize:9}}>{copied==="editor"?"✅":"📋"}</button>
                     <button onClick={runCode} disabled={running||!pyReady}
-                      style={{background:running?"#333350":"#00D084",color:running?"#94a3b8":"#000",border:"none",borderRadius:4,padding:"2px 10px",fontSize:10,cursor:running||!pyReady?"not-allowed":"pointer",fontWeight:"bold"}}>
+                      style={{background:running?T.bgRaised:"#00D084",color:running?T.textDim:"#000",border:"none",borderRadius:4,padding:"2px 10px",fontSize:10,fontWeight:"bold",cursor:running||!pyReady?"not-allowed":"pointer"}}>
                       {running?"⏳":"▶ Run"}
                     </button>
                   </div>
                 </div>
-                <textarea ref={textareaRef} value={code} onChange={e=>setCode(e.target.value)} onKeyDown={handleTabKey} spellCheck={false}
-                  style={{flex:1,background:"#1a1a2e",color:"#e2e8ef",border:"none",padding:"10px",fontSize:11,fontFamily:"inherit",lineHeight:1.7,minHeight:0}}
-                  placeholder="# Your Python code here...&#10;# Click ▶ Run to execute!"/>
-                <div style={{borderTop:"1px solid #333350",background:"#13131f"}}>
-                  <div style={{padding:"5px 10px",borderBottom:"1px solid #333350",display:"flex",justifyContent:"space-between"}}>
-                    <div style={{fontSize:10,color:"#94a3b8"}}>⚡ Output</div>
-                    <button onClick={()=>setOutput("")} style={{background:"none",border:"none",color:"#4a5568",cursor:"pointer",fontSize:9}}>Clear</button>
+
+                {/* CodeMirror mount point */}
+                <div ref={cmElRef} style={{flex:1,overflow:"hidden",minHeight:0}}/>
+
+                {/* HORIZONTAL DIVIDER */}
+                <div onMouseDown={startHDrag}
+                  style={{height:5,background:T.border,cursor:"row-resize",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}
+                  onMouseEnter={e=>e.currentTarget.style.background=T.borderHv}
+                  onMouseLeave={e=>e.currentTarget.style.background=T.border}>
+                  <div style={{height:1,width:28,background:T.textFnt,borderRadius:1,pointerEvents:"none"}}/>
+                </div>
+
+                {/* OUTPUT */}
+                <div style={{height:outputHeight,display:"flex",flexDirection:"column",background:T.bgDeep,flexShrink:0,minHeight:60,position:"relative"}}>
+                  <div style={{padding:"5px 10px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+                    <div style={{fontSize:10,color:T.textDim}}>⚡ Output</div>
+                    <button onClick={()=>setOutput("")} style={{background:"none",border:"none",color:T.textFnt,fontSize:9}}>Clear</button>
                   </div>
-                  <div style={{height:150,overflowY:"auto",padding:"8px 10px"}}>
-                    {output?<pre style={{margin:0,fontSize:11,color:output.includes("❌")?"#fc8181":"#68d391",whiteSpace:"pre-wrap",lineHeight:1.6}}>{output}</pre>
-                    :<div style={{color:"#4a5568",fontSize:10,fontStyle:"italic"}}>Click ▶ Run to see output...</div>}
+                  <div style={{flex:1,overflowY:"auto",padding:"8px 10px"}}>
+                    {output
+                      ? <pre style={{margin:0,fontSize:11,color:output.includes("❌")?"#fc8181":"#68d391",whiteSpace:"pre-wrap",lineHeight:1.6}}>{output}</pre>
+                      : <div style={{color:T.textFnt,fontSize:10,fontStyle:"italic"}}>Click ▶ Run to see output…</div>}
+                  </div>
+                  {/* Corner grip */}
+                  <div style={{position:"absolute",bottom:0,right:0,width:14,height:14,cursor:"nw-resize",opacity:0.4,display:"flex",alignItems:"flex-end",justifyContent:"flex-end",padding:2}}
+                    onMouseDown={e=>{
+                      e.preventDefault();
+                      const sy=e.clientY,sh=outputHeight;
+                      const mv=ev=>setOutputHeight(Math.max(60,Math.min(500,sh+(sy-ev.clientY))));
+                      const up=()=>{window.removeEventListener("mousemove",mv);window.removeEventListener("mouseup",up);};
+                      window.addEventListener("mousemove",mv);window.addEventListener("mouseup",up);
+                    }}>
+                    <svg width="10" height="10" viewBox="0 0 10 10"><path d="M9 1L1 9M9 5L5 9" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/></svg>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Cheat Sheet */}
+          {/* CHEAT SHEET */}
           {view==="cheatsheet" && (
-            <div style={{padding:20,overflowY:"auto",flex:1}}>
-              <div style={{fontSize:17,fontWeight:"bold",color:"#e2e8ef",marginBottom:16}}>📋 Syntax Cheat Sheet — click any line to copy</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))",gap:10}}>
+            <div style={{padding:18,overflowY:"auto",flex:1,background:T.bg}}>
+              <div style={{fontSize:16,fontWeight:"bold",color:T.text,marginBottom:14}}>📋 Syntax Cheat Sheet — click any line to copy</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:10}}>
                 {[
-                  {cat:"Variables",items:['name = "Alice"',"age = 25","is_active = True","pi = 3.14"]},
-                  {cat:"Print & f-strings",items:['print("text")','print(f"Hi {name}")', 'print("=" * 40)','print(x, y)']},
-                  {cat:"Lists",items:["lst = [1,2,3]","lst.append(4)","lst[0]","len(lst)","lst[-1]"]},
-                  {cat:"Dictionaries",items:['d = {"k":"v"}','d["key"]','d.get("k",default)',"d.keys()","d.items()"]},
-                  {cat:"Conditions",items:["if x > 0:","elif x == 0:","else:","if a and b:","if a or b:"]},
-                  {cat:"Loops",items:["for item in list:","for i in range(5):","for k,v in d.items():","while condition:"]},
-                  {cat:"Functions",items:["def func(x, y=0):","    return x + y","result = func(5,3)","*args for many args"]},
-                  {cat:"Classes",items:["class Dog:","    def __init__(self,n):","        self.name = n","d = Dog('Rex')"]},
-                  {cat:"List Comprehension",items:["[x for x in lst]","[x for x in lst if x>0]","[x*2 for x in range(5)]"]},
-                  {cat:"Error Handling",items:["try:","    risky_code()","except ValueError as e:","    print(e)","finally:"]},
-                  {cat:"Imports",items:["import requests","from fastapi import FastAPI","import json","from datetime import datetime"]},
-                  {cat:"String Methods",items:["s.lower()","s.upper()","s.strip()",'s.split(",")','f"Hi {name}"']},
+                  {cat:"Variables",       items:['name = "Alice"',"age = 25","is_active = True","pi = 3.14"]},
+                  {cat:"Print / f-strings",items:['print("text")','print(f"Hi {name}")', 'print("=" * 40)']},
+                  {cat:"Lists",           items:["lst = [1,2,3]","lst.append(4)","lst[0]","len(lst)","lst[-1]"]},
+                  {cat:"Dicts",           items:['d = {"k":"v"}','d["key"]','d.get("k",default)',"d.keys()","d.items()"]},
+                  {cat:"Conditions",      items:["if x > 0:","elif x == 0:","else:","if a and b:","if a or b:"]},
+                  {cat:"Loops",           items:["for item in list:","for i in range(5):","for k,v in d.items():","while condition:"]},
+                  {cat:"Functions",       items:["def func(x, y=0):","    return x + y","result = func(5,3)"]},
+                  {cat:"Classes",         items:["class Dog:","    def __init__(self,n):","        self.name = n","d = Dog('Rex')"]},
+                  {cat:"Comprehensions",  items:["[x for x in lst]","[x for x in lst if x>0]","[x*2 for x in range(5)]"]},
+                  {cat:"Error Handling",  items:["try:","    risky_code()","except ValueError as e:","    print(e)","finally:"]},
+                  {cat:"Imports",         items:["import requests","from fastapi import FastAPI","import json"]},
+                  {cat:"Strings",         items:["s.lower()","s.upper()","s.strip()",'s.split(",")','f"Hi {name}"']},
                 ].map(sec=>(
-                  <div key={sec.cat} style={{background:"#2a2a3e",border:"1px solid #333350",borderRadius:8,overflow:"hidden"}}>
-                    <div style={{background:"#13131f",padding:"5px 10px",fontSize:10,fontWeight:"bold",color:"#00D084"}}>{sec.cat}</div>
-                    <div style={{padding:8}}>
+                  <div key={sec.cat} style={{background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:8,overflow:"hidden"}}>
+                    <div style={{background:T.bgDeep,padding:"5px 10px",fontSize:10,fontWeight:"bold",color:"#00D084"}}>{sec.cat}</div>
+                    <div style={{padding:7}}>
                       {sec.items.map((item,i)=>(
                         <div key={i} onClick={()=>copyCode(item,`cs-${sec.cat}-${i}`)}
-                          style={{background:copied===`cs-${sec.cat}-${i}`?"#00D08422":"#1e1e2e",borderRadius:3,padding:"3px 7px",marginBottom:3,cursor:"pointer",display:"flex",justifyContent:"space-between"}}>
-                          <code style={{fontSize:10,color:"#e2e8ef"}}>{item}</code>
-                          <span style={{fontSize:9,color:"#4a5568"}}>{copied===`cs-${sec.cat}-${i}`?"✅":"copy"}</span>
+                          style={{background:copied===`cs-${sec.cat}-${i}`?"#00D08422":T.bg,borderRadius:3,padding:"3px 7px",marginBottom:3,cursor:"pointer",display:"flex",justifyContent:"space-between"}}>
+                          <code style={{fontSize:10,color:T.text}}>{item}</code>
+                          <span style={{fontSize:9,color:T.textFnt}}>{copied===`cs-${sec.cat}-${i}`?"✅":"copy"}</span>
                         </div>
                       ))}
                     </div>
@@ -765,36 +899,38 @@ finally:
             </div>
           )}
 
-          {/* Quiz */}
+          {/* QUIZ */}
           {view==="quiz" && (
-            <div style={{padding:20,overflowY:"auto",flex:1}}>
-              <div style={{maxWidth:500,margin:"0 auto"}}>
-                <div style={{fontSize:17,fontWeight:"bold",color:"#e2e8ef",marginBottom:4}}>🧠 Syntax Quiz</div>
-                <div style={{fontSize:11,color:"#64748b",marginBottom:20}}>No peeking! Builds muscle memory. Do this every morning.</div>
+            <div style={{padding:18,overflowY:"auto",flex:1,background:T.bg}}>
+              <div style={{maxWidth:480,margin:"0 auto"}}>
+                <div style={{fontSize:16,fontWeight:"bold",color:T.text,marginBottom:3}}>🧠 Syntax Quiz</div>
+                <div style={{fontSize:11,color:T.textMut,marginBottom:18}}>No peeking! Builds muscle memory. Do this every morning.</div>
+
                 {!quiz.active && quiz.q===0 && (
-                  <div style={{textAlign:"center",padding:40}}>
-                    <div style={{fontSize:48,marginBottom:12}}>🧠</div>
-                    <div style={{fontSize:14,color:"#e2e8ef",marginBottom:20}}>{QUIZ.length} questions • Answer from memory</div>
+                  <div style={{textAlign:"center",padding:36}}>
+                    <div style={{fontSize:48,marginBottom:10}}>🧠</div>
+                    <div style={{fontSize:14,color:T.text,marginBottom:6}}>{QUIZ.length} questions · Answer from memory</div>
+                    {bestScore>0 && <div style={{fontSize:11,color:"#F59E0B",marginBottom:18}}>🏅 Best score: {bestScore}/{QUIZ.length}</div>}
+                    {!bestScore && <div style={{height:18,marginBottom:18}}/>}
                     <button onClick={()=>setQuiz({active:true,q:0,score:0,answered:null})}
-                      style={{background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"10px 24px",fontSize:12,fontWeight:"bold",cursor:"pointer"}}>
+                      style={{background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"10px 24px",fontSize:12,fontWeight:"bold"}}>
                       Start Quiz →
                     </button>
                   </div>
                 )}
+
                 {quiz.active && quiz.q<QUIZ.length && (
                   <div>
-                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:12,fontSize:10,color:"#64748b"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,fontSize:10,color:T.textMut}}>
                       <span>Q {quiz.q+1} of {QUIZ.length}</span><span>Score: {quiz.score}/{quiz.q} ✅</span>
                     </div>
-                    <div style={{background:"#2a2a3e",border:"1px solid #333350",borderRadius:8,padding:16,marginBottom:12}}>
-                      <div style={{fontSize:14,color:"#e2e8ef",fontWeight:"bold"}}>{QUIZ[quiz.q].q}</div>
+                    <div style={{background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:8,padding:14,marginBottom:10}}>
+                      <div style={{fontSize:14,color:T.text,fontWeight:"bold"}}>{QUIZ[quiz.q].q}</div>
                     </div>
-                    <div style={{display:"grid",gap:7}}>
+                    <div style={{display:"grid",gap:6}}>
                       {QUIZ[quiz.q].opts.map((opt,i)=>{
-                        const correct=opt===QUIZ[quiz.q].a;
-                        const answered=quiz.answered!==null;
-                        const selected=quiz.answered===opt;
-                        let bg="#2a2a3e",border="#333350",color="#e2e8ef";
+                        const correct=opt===QUIZ[quiz.q].a, answered=quiz.answered!==null, selected=quiz.answered===opt;
+                        let bg=T.bgMid, border=T.border, color=T.text;
                         if(answered){if(correct){bg="#1a2e1a";border="#00D084";color="#00D084";}else if(selected){bg="#2e1a1a";border="#fc8181";color="#fc8181";}}
                         return (
                           <button key={i} disabled={answered}
@@ -807,19 +943,22 @@ finally:
                     </div>
                     {quiz.answered && (
                       <button onClick={()=>setQuiz(p=>({...p,q:p.q+1,answered:null}))}
-                        style={{marginTop:10,background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"7px 16px",fontSize:11,fontWeight:"bold",cursor:"pointer"}}>
+                        style={{marginTop:9,background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"7px 16px",fontSize:11,fontWeight:"bold"}}>
                         {quiz.q+1<QUIZ.length?"Next →":"See Score →"}
                       </button>
                     )}
                   </div>
                 )}
+
                 {quiz.active && quiz.q>=QUIZ.length && (
-                  <div style={{textAlign:"center",padding:40}}>
-                    <div style={{fontSize:48,marginBottom:12}}>{quiz.score>=6?"🏆":quiz.score>=4?"💪":"📚"}</div>
-                    <div style={{fontSize:22,color:"#00D084",fontWeight:"bold",marginBottom:6}}>{quiz.score}/{QUIZ.length}</div>
-                    <div style={{fontSize:13,color:"#e2e8ef",marginBottom:20}}>{quiz.score>=6?"Syntax locked in! 🔥":quiz.score>=4?"Getting there — retry!":"Keep at it — repetition = memory."}</div>
-                    <button onClick={()=>setQuiz({active:true,q:0,score:0,answered:null})}
-                      style={{background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"10px 24px",fontSize:12,fontWeight:"bold",cursor:"pointer"}}>
+                  <div style={{textAlign:"center",padding:36}}>
+                    <div style={{fontSize:48,marginBottom:10}}>{quiz.score>=6?"🏆":quiz.score>=4?"💪":"📚"}</div>
+                    <div style={{fontSize:22,color:"#00D084",fontWeight:"bold",marginBottom:5}}>{quiz.score}/{QUIZ.length}</div>
+                    {quiz.score>bestScore && <div style={{fontSize:11,color:"#F59E0B",marginBottom:5}}>🎉 New best score!</div>}
+                    {bestScore>0&&quiz.score<=bestScore && <div style={{fontSize:11,color:T.textMut,marginBottom:5}}>🏅 Best: {bestScore}/{QUIZ.length}</div>}
+                    <div style={{fontSize:13,color:T.text,marginBottom:18}}>{quiz.score>=6?"Syntax locked in! 🔥":quiz.score>=4?"Getting there — retry!":"Keep at it — repetition = memory."}</div>
+                    <button onClick={()=>{ const nb=Math.max(bestScore,quiz.score); if(nb>bestScore){setBestScore(nb);localStorage.setItem("bc_bestscore",nb);} setQuiz({active:true,q:0,score:0,answered:null}); }}
+                      style={{background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"10px 24px",fontSize:12,fontWeight:"bold"}}>
                       Try Again →
                     </button>
                   </div>
@@ -830,114 +969,84 @@ finally:
         </div>
       </div>
 
-      {/* Settings Modal */}
+      {/* ── SETTINGS MODAL ── */}
       {showSettings && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000}}>
-          <div style={{background:"#1e1e2e",border:"1px solid #333350",borderRadius:14,padding:24,width:420,maxHeight:"90vh",overflowY:"auto"}}>
-            <div style={{fontSize:16,fontWeight:"bold",color:"#e2e8ef",marginBottom:4}}>⚙️ AI Tutor Setup</div>
-            <div style={{fontSize:11,color:"#64748b",marginBottom:20}}>Enter one API key to power the chat tutor. Keys are saved locally in your browser — never sent anywhere else.</div>
+          <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:14,padding:22,width:400,maxHeight:"90vh",overflowY:"auto"}}>
+            <div style={{fontSize:15,fontWeight:"bold",color:T.text,marginBottom:3}}>⚙️ AI Tutor Setup</div>
+            <div style={{fontSize:11,color:T.textMut,marginBottom:18}}>Enter one API key to power the chat tutor. Stored locally — never sent anywhere else.</div>
 
-            {/* Gemini */}
-            <div style={{marginBottom:4}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                <div style={{fontSize:11,fontWeight:"bold",color:"#00D084"}}>🟢 Google Gemini</div>
-                <span style={{fontSize:9,background:"#00D08422",color:"#00D084",padding:"2px 7px",borderRadius:8,border:"1px solid #00D08444"}}>⭐ Recommended — FREE</span>
+            {[
+              {id:"gemini",    label:"🟢 Google Gemini",    color:"#00D084", badge:"⭐ FREE",         hint:`Go to aistudio.google.com → Get API Key. 30 seconds, no card needed.`,           key:geminiKey,    ph:"Paste Gemini API key"},
+              {id:"openai",    label:"🟦 OpenAI",           color:"#74aa9c", badge:"~$0.60/1M tokens", hint:`platform.openai.com → API Keys. Requires ~$5 credit. Uses gpt-4o-mini.`,        key:openaiKey,    ph:"Paste OpenAI API key (sk-...)"},
+              {id:"anthropic", label:"🟠 Anthropic (Claude)",color:"#f472b6", badge:"~$0.80/1M tokens", hint:`console.anthropic.com → API Keys. Add $5 credit. Uses Claude Haiku.`,            key:anthropicKey, ph:"Paste Anthropic API key (sk-ant-...)"},
+            ].map(p=>(
+              <div key={p.id} style={{marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                  <div style={{fontSize:11,fontWeight:"bold",color:p.color}}>{p.label}</div>
+                  <span style={{fontSize:9,background:`${p.color}22`,color:p.color,padding:"2px 7px",borderRadius:8,border:`1px solid ${p.color}44`}}>{p.badge}</span>
+                </div>
+                <input value={keyInput[p.id]} onChange={e=>setKeyInput(prev=>({...prev,[p.id]:e.target.value}))}
+                  placeholder={p.key?"✅ Saved — paste to update":p.ph}
+                  style={{width:"100%",background:T.bgDeep,border:`1px solid ${p.key?`${p.color}66`:T.border}`,borderRadius:6,padding:"7px 10px",fontSize:11,color:T.text,fontFamily:"inherit",marginBottom:5}}/>
+                <div style={{fontSize:10,color:T.textMut,background:T.bgDeep,borderRadius:5,padding:"6px 10px",borderLeft:`2px solid ${p.color}`}}>
+                  💡 {p.hint}
+                </div>
               </div>
-              <input value={keyInput.gemini} onChange={e=>setKeyInput(p=>({...p,gemini:e.target.value}))}
-                placeholder={geminiKey?"✅ Key saved — paste new to update":"Paste your Gemini API key here"}
-                style={{width:"100%",background:"#13131f",border:`1px solid ${geminiKey?"#00D08466":"#333350"}`,borderRadius:6,padding:"8px 10px",fontSize:11,color:"#e2e8ef",fontFamily:"inherit",marginBottom:6}}/>
-              <div style={{fontSize:10,color:"#64748b",background:"#13131f",borderRadius:5,padding:"7px 10px",borderLeft:"2px solid #00D084",marginBottom:16}}>
-                💡 <strong style={{color:"#94a3b8"}}>How to get it free:</strong> Go to <span style={{color:"#00D084"}}>aistudio.google.com</span> → Sign in with Google → Click "Get API Key" → Create new key. Takes 30 seconds, no credit card needed.
-              </div>
-            </div>
+            ))}
 
-            {/* OpenAI */}
-            <div style={{marginBottom:4}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                <div style={{fontSize:11,fontWeight:"bold",color:"#74aa9c"}}>🟦 OpenAI (ChatGPT)</div>
-                <span style={{fontSize:9,background:"#74aa9c22",color:"#74aa9c",padding:"2px 7px",borderRadius:8,border:"1px solid #74aa9c44"}}>Paid — ~$0.60/1M tokens</span>
-              </div>
-              <input value={keyInput.openai} onChange={e=>setKeyInput(p=>({...p,openai:e.target.value}))}
-                placeholder={openaiKey?"✅ Key saved — paste new to update":"Paste your OpenAI API key (sk-...)"}
-                style={{width:"100%",background:"#13131f",border:`1px solid ${openaiKey?"#74aa9c66":"#333350"}`,borderRadius:6,padding:"8px 10px",fontSize:11,color:"#e2e8ef",fontFamily:"inherit",marginBottom:6}}/>
-              <div style={{fontSize:10,color:"#64748b",background:"#13131f",borderRadius:5,padding:"7px 10px",borderLeft:"2px solid #74aa9c",marginBottom:16}}>
-                💡 <strong style={{color:"#94a3b8"}}>How to get it:</strong> Go to <span style={{color:"#74aa9c"}}>platform.openai.com</span> → Sign in → API Keys → Create new key. Requires adding a small credit (~$5). Uses <strong style={{color:"#94a3b8"}}>gpt-4o-mini</strong> — fast and affordable.
-              </div>
-            </div>
-
-            {/* Anthropic */}
-            <div style={{marginBottom:4}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                <div style={{fontSize:11,fontWeight:"bold",color:"#f472b6"}}>🟠 Anthropic (Claude)</div>
-                <span style={{fontSize:9,background:"#f472b622",color:"#f472b6",padding:"2px 7px",borderRadius:8,border:"1px solid #f472b644"}}>Paid — ~$0.80/1M tokens</span>
-              </div>
-              <input value={keyInput.anthropic} onChange={e=>setKeyInput(p=>({...p,anthropic:e.target.value}))}
-                placeholder={anthropicKey?"✅ Key saved — paste new to update":"Paste your Anthropic API key (sk-ant-...)"}
-                style={{width:"100%",background:"#13131f",border:`1px solid ${anthropicKey?"#f472b666":"#333350"}`,borderRadius:6,padding:"8px 10px",fontSize:11,color:"#e2e8ef",fontFamily:"inherit",marginBottom:6}}/>
-              <div style={{fontSize:10,color:"#64748b",background:"#13131f",borderRadius:5,padding:"7px 10px",borderLeft:"2px solid #f472b6",marginBottom:16}}>
-                💡 <strong style={{color:"#94a3b8"}}>How to get it:</strong> Go to <span style={{color:"#f472b6"}}>console.anthropic.com</span> → Sign in → API Keys → Create key. Add $5 credit to start. Uses <strong style={{color:"#94a3b8"}}>Claude Haiku</strong> — very fast and capable.
-              </div>
-            </div>
-
-            {/* Priority note */}
-            {(geminiKey||openaiKey||anthropicKey) && (
-              <div style={{fontSize:10,color:"#64748b",background:"#252538",borderRadius:6,padding:"8px 10px",marginBottom:16,border:"1px solid #333350"}}>
-                🔄 <strong style={{color:"#94a3b8"}}>Active provider:</strong> <span style={{color:"#00D084"}}>{activeProvider}</span> — if multiple keys are saved, priority is Gemini → OpenAI → Anthropic.
-                {" "}<button onClick={()=>{
-                  if(window.confirm("Clear all saved API keys?")) {
-                    localStorage.removeItem("gemini_key"); localStorage.removeItem("openai_key"); localStorage.removeItem("anthropic_key");
-                    setGeminiKey(""); setOpenaiKey(""); setAnthropicKey("");
-                  }
-                }} style={{background:"none",border:"none",color:"#fc8181",cursor:"pointer",fontSize:10,textDecoration:"underline",padding:0}}>Clear all keys</button>
+            {hasKey && (
+              <div style={{fontSize:10,color:T.textMut,background:T.bgRaised,borderRadius:6,padding:"7px 10px",marginBottom:14,border:`1px solid ${T.border}`}}>
+                🔄 <strong style={{color:T.textDim}}>Active:</strong> <span style={{color:"#00D084"}}>{activeProvider}</span> — priority: Gemini → OpenAI → Anthropic.
+                {" "}<button onClick={()=>{if(window.confirm("Clear all API keys?")){["gemini_key","openai_key","anthropic_key"].forEach(k=>localStorage.removeItem(k));setGeminiKey("");setOpenaiKey("");setAnthropicKey("");}}}
+                  style={{background:"none",border:"none",color:"#fc8181",fontSize:10,textDecoration:"underline",padding:0,cursor:"pointer"}}>Clear all keys</button>
               </div>
             )}
 
-            <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
-              <button onClick={()=>setShowSettings(false)} style={{background:"#333350",color:"#94a3b8",border:"none",borderRadius:6,padding:"7px 14px",fontSize:11,cursor:"pointer"}}>Cancel</button>
-              <button onClick={saveKeys} style={{background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"7px 14px",fontSize:11,fontWeight:"bold",cursor:"pointer"}}>Save Keys →</button>
+            <div style={{display:"flex",gap:7,justifyContent:"flex-end"}}>
+              <button onClick={()=>setShowSettings(false)} style={{background:T.bgRaised,color:T.textDim,border:"none",borderRadius:6,padding:"7px 14px",fontSize:11}}>Cancel</button>
+              <button onClick={saveKeys} style={{background:"#00D084",color:"#000",border:"none",borderRadius:6,padding:"7px 14px",fontSize:11,fontWeight:"bold"}}>Save Keys →</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Floating Chat Button */}
+      {/* ── CHAT BUTTON ── */}
       <button onClick={()=>{ if(!hasKey){setShowSettings(true);}else{setChatOpen(o=>!o);} }}
-        style={{position:"fixed",bottom:24,right:24,width:50,height:50,borderRadius:"50%",background:chatOpen?"#333350":"#00D084",color:chatOpen?"#e2e8ef":"#000",border:"none",fontSize:20,cursor:"pointer",boxShadow:"0 4px 20px rgba(0,208,132,0.4)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        style={{position:"fixed",bottom:22,right:22,width:48,height:48,borderRadius:"50%",background:chatOpen?T.bgRaised:"#00D084",color:chatOpen?T.text:"#000",border:"none",fontSize:20,boxShadow:"0 4px 20px rgba(0,208,132,0.35)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}}>
         {chatOpen?"✕":"💬"}
       </button>
 
-      {/* Chat Panel */}
+      {/* ── CHAT PANEL ── */}
       {chatOpen && (
-        <div style={{position:"fixed",bottom:86,right:24,width:330,height:440,background:"#1e1e2e",border:"1px solid #333350",borderRadius:14,display:"flex",flexDirection:"column",zIndex:999,boxShadow:"0 8px 32px rgba(0,0,0,0.5)",overflow:"hidden"}}>
-          <div style={{padding:"10px 14px",background:"#13131f",borderBottom:"1px solid #333350",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:16}}>🤖</span>
+        <div style={{position:"fixed",bottom:82,right:22,width:320,height:430,background:T.bg,border:`1px solid ${T.border}`,borderRadius:14,display:"flex",flexDirection:"column",zIndex:999,boxShadow:"0 8px 32px rgba(0,0,0,0.4)",overflow:"hidden"}}>
+          <div style={{padding:"9px 13px",background:T.bgDeep,borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:7}}>
+              <span style={{fontSize:15}}>🤖</span>
               <div>
-                <div style={{fontSize:13,fontWeight:"bold",color:"#e2e8ef"}}>Python Tutor</div>
-                <div style={{fontSize:10,color:"#64748b"}}>{activeLesson?`On: ${activeLesson.title}`:"Ask me anything about Python"}</div>
+                <div style={{fontSize:13,fontWeight:"bold",color:T.text}}>Python Tutor</div>
+                <div style={{fontSize:10,color:T.textMut}}>{activeLesson?`On: ${activeLesson.title}`:"Ask me anything"}</div>
               </div>
             </div>
-            <div style={{fontSize:9,color:"#64748b",background:"#252538",padding:"2px 6px",borderRadius:5,cursor:"pointer"}} onClick={()=>setChatOpen(false)&&setShowSettings(true)}>
-              via {activeProvider}
-            </div>
+            <div style={{fontSize:9,color:T.textMut,background:T.bgRaised,padding:"2px 6px",borderRadius:5}}>via {activeProvider}</div>
           </div>
-          <div style={{flex:1,overflowY:"auto",padding:"10px",display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{flex:1,overflowY:"auto",padding:10,display:"flex",flexDirection:"column",gap:7}}>
             {chatMessages.map((msg,i)=>(
               <div key={i} style={{display:"flex",justifyContent:msg.role==="user"?"flex-end":"flex-start"}}>
-                <div style={{maxWidth:"85%",background:msg.role==="user"?"#00D084":"#2a2a3e",color:msg.role==="user"?"#000":"#e2e8ef",borderRadius:msg.role==="user"?"12px 12px 2px 12px":"12px 12px 12px 2px",padding:"7px 11px",fontSize:12,lineHeight:1.6,whiteSpace:"pre-wrap"}}>
+                <div style={{maxWidth:"85%",background:msg.role==="user"?"#00D084":T.bgMid,color:msg.role==="user"?"#000":T.text,borderRadius:msg.role==="user"?"12px 12px 2px 12px":"12px 12px 12px 2px",padding:"7px 11px",fontSize:12,lineHeight:1.6,whiteSpace:"pre-wrap"}}>
                   {msg.text}
                 </div>
               </div>
             ))}
-            {chatLoading && <div style={{display:"flex",justifyContent:"flex-start"}}><div style={{background:"#2a2a3e",borderRadius:"12px 12px 12px 2px",padding:"7px 12px",fontSize:16}}>⏳</div></div>}
+            {chatLoading && <div style={{display:"flex",justifyContent:"flex-start"}}><div style={{background:T.bgMid,borderRadius:"12px 12px 12px 2px",padding:"7px 12px",fontSize:15}}>⏳</div></div>}
             <div ref={chatEndRef}/>
           </div>
-          <div style={{padding:"8px 10px",borderTop:"1px solid #333350",display:"flex",gap:7}}>
+          <div style={{padding:"7px 9px",borderTop:`1px solid ${T.border}`,display:"flex",gap:6,flexShrink:0}}>
             <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&sendChat()}
-              placeholder="Ask a Python question..."
-              style={{flex:1,background:"#13131f",border:"1px solid #333350",borderRadius:7,padding:"7px 10px",fontSize:12,color:"#e2e8ef",fontFamily:"inherit"}}/>
+              placeholder="Ask a Python question…"
+              style={{flex:1,background:T.bgDeep,border:`1px solid ${T.border}`,borderRadius:7,padding:"7px 9px",fontSize:12,color:T.text,fontFamily:"inherit"}}/>
             <button onClick={sendChat} disabled={chatLoading||!chatInput.trim()}
-              style={{background:chatLoading||!chatInput.trim()?"#333350":"#00D084",color:chatLoading||!chatInput.trim()?"#718096":"#000",border:"none",borderRadius:7,padding:"7px 12px",fontSize:13,fontWeight:"bold",cursor:chatLoading||!chatInput.trim()?"not-allowed":"pointer"}}>
+              style={{background:chatLoading||!chatInput.trim()?T.bgRaised:"#00D084",color:chatLoading||!chatInput.trim()?T.textMut:"#000",border:"none",borderRadius:7,padding:"7px 11px",fontSize:13,fontWeight:"bold",cursor:chatLoading||!chatInput.trim()?"not-allowed":"pointer"}}>
               →
             </button>
           </div>

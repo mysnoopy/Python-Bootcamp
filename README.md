@@ -1,119 +1,123 @@
-# 🐍 Python Bootcamp — Interactive Single-File Learning App
+# 🐍 Python Bootcamp — Interactive Learning Platform
 
-A self-contained Python learning platform that runs entirely in your browser. No installs, no terminal, no setup. Just download one HTML file and open it.
+A fully self-contained HTML file for learning Python from scratch — no installs, no terminal, no server. Just download and open.
 
 ---
 
 ## ✨ Features
 
-- **7 phases** — Python Basics → Data Types → OOP → APIs → Frameworks → AI/LLMs → AI Topics
-- **Line-by-line code explanations** — every line explained in plain English
-- **Built-in Python editor** — write and run real Python code in the browser (powered by Pyodide)
-- **AI chat tutor** — ask questions about any lesson using your own API key
-- **Syntax cheat sheet** — click any line to copy
-- **Quiz** — 8 questions to test retention
+| Feature | Details |
+|---|---|
+| 🐍 7 Phases of curriculum | Python Basics → Data Types → OOP → APIs → Frameworks → AI/LLMs → AI Topics |
+| 📝 Built-in code editor | **CodeMirror** with Python syntax highlighting, line numbers, bracket matching |
+| ▶️ Run Python in browser | Powered by **Pyodide** (Python-in-WebAssembly) — zero backend needed |
+| 💡 Line-by-line explanations | Toggle on/off for each lesson |
+| 🤖 AI Chat Tutor | Context-aware Python tutor using Gemini, OpenAI, or Anthropic |
+| 💾 Progress persistence | Completed lessons, last position, and best quiz score saved via `localStorage` |
+| 🌙 Dark / ☀️ Light theme | Toggle anytime — preference remembered across sessions |
+| 📱 Mobile-friendly | Responsive layout stacks on small screens |
+| 📋 Cheat Sheet | Click-to-copy syntax reference for all key concepts |
+| 🧠 Quiz | 8-question syntax quiz with best-score tracking |
+| ↔️ Resizable panels | Drag dividers to resize explanation pane, editor, and output |
 
 ---
 
 ## 🚀 Getting Started
 
 1. Download `python_bootcamp_standalone.html`
-2. Double-click to open in your browser
-3. Start learning — no installation needed
+2. Double-click to open in your browser (Chrome or Firefox recommended)
+3. Wait ~5 seconds for Python (Pyodide) to load — you'll see **🟢 Python Ready** in the header
+4. Pick a phase from the sidebar and start coding
 
-> **Python runs in the browser via [Pyodide](https://pyodide.org). Requires an internet connection on first load to download the Python runtime (~10MB). Subsequent loads are faster.**
+**On mobile?** The layout automatically stacks — sidebar hides, panes stack vertically. Works in mobile Chrome/Safari.
+
+No npm. No pip. No server. Just a browser.
 
 ---
 
-## 🤖 AI Chat Tutor (Optional)
+## 🤖 AI Chat Tutor Setup
 
-The floating 💬 button opens a context-aware Python tutor that knows which lesson you're on. It requires an API key from one of the supported providers.
+The floating **💬 button** opens a Python tutor powered by your own API key. Click **⚙️ Setup AI** in the header.
 
-### Supported Providers
-
-| Provider | Cost | Model | Get Key |
+| Provider | Cost | Model | Where to get key |
 |---|---|---|---|
-| 🟢 **Google Gemini** | Free | gemini-2.5-flash | [aistudio.google.com](https://aistudio.google.com) |
-| 🟦 **OpenAI** | Paid (~$0.60/1M tokens) | gpt-4o-mini | [platform.openai.com](https://platform.openai.com) |
-| 🟠 **Anthropic** | Paid (~$0.80/1M tokens) | claude-haiku | [console.anthropic.com](https://console.anthropic.com) |
+| 🟢 **Google Gemini** | **FREE** ⭐ | gemini-2.0-flash-exp | [aistudio.google.com](https://aistudio.google.com) → Get API Key |
+| 🟦 OpenAI | ~$0.60/1M tokens | gpt-4o-mini | [platform.openai.com](https://platform.openai.com) → API Keys |
+| 🟠 Anthropic | ~$0.80/1M tokens | claude-haiku | [console.anthropic.com](https://console.anthropic.com) → API Keys |
 
-**Gemini is recommended** — free with any Google account, no credit card required. Sign in at [aistudio.google.com](https://aistudio.google.com), click "Get API Key", done.
+> **Recommended:** Start with Gemini — it's free and takes 30 seconds to set up (no credit card).
 
-### How to add your key
-
-Click **⚙️ Setup AI** in the top-right corner → paste your key → Save. The key is remembered in your browser.
-
----
-
-## ⚠️ API Key Security — Please Read
-
-> **This app stores your API key in your browser's `localStorage`. Understand the risks before use.**
-
-### What localStorage means
-
-Your API key is saved as plain text inside your browser's local storage on your computer. It is **never transmitted to any server** by this app — all AI calls go directly from your browser to the AI provider's API.
-
-### Known risks
-
-| Risk | Level | Details |
-|---|---|---|
-| **Browser extensions** | ⚠️ Medium | Malicious extensions can read `localStorage` from any page. Only use trusted extensions. |
-| **Shared computers** | ⚠️ Medium | Anyone with access to the same browser profile can view your key via DevTools → Application → Local Storage. |
-| **Physical access** | ⚠️ Medium | If someone else has access to your computer and browser, they can extract the key. |
-| **XSS injection** | ✅ Low | Not applicable — this is a local HTML file with no server, no user-generated HTML rendering, and no third-party ad scripts. |
-| **Network interception** | ✅ Low | All API calls use HTTPS. Your key is never in a URL parameter. |
-
-### Best practices
-
-- **Use Gemini's free key** — if compromised, you can revoke and regenerate it instantly at no cost
-- **Set spending limits** on paid API keys (OpenAI and Anthropic both support this in their dashboards)
-- **Never use this on a shared or public computer**
-- **Revoke your key immediately** if you suspect it was exposed — takes 10 seconds in any provider's dashboard
-- To remove your saved key: open ⚙️ Settings → "Clear all keys"
-
----
-
-## 🔒 Local Use Only — Not for Public Deployment
-
-> **This app is designed for personal, local use only.**
-
-It is **not safe** to host this file on a public web server, deploy it to a hosting platform (Netlify, Vercel, GitHub Pages, etc.), or share it as a hosted URL. Doing so would expose your app to the open internet where:
-
-- Anyone can open the browser DevTools and potentially inspect stored keys
-- You lose control over who accesses the app
-- Hosting environments may introduce risks not present in a local file context
-
-**If you share this project, share the HTML file itself — not a hosted version.**
-
-> By using this app and entering your API key, you accept full responsibility for any risks associated with storing credentials in browser localStorage on your device. The author(s) of this project are not liable for any unauthorized access, API key exposure, or resulting charges.
+Keys are stored in your browser's `localStorage` only. They are never transmitted anywhere except directly to the respective API provider.
 
 ---
 
 ## 📚 Curriculum
 
-| Phase | Topic | Projects |
+| Phase | Topics | Project |
 |---|---|---|
-| 1 🐍 | Python Basics | Student Bio Card, Grade Screener |
-| 2 📦 | Data Types | Movie Library Manager, Shopping Cart |
-| 3 🏗️ | OOP | Library Book System |
-| 4 🔌 | APIs | Live Weather Fetcher |
-| 5 ⚙️ | Frameworks | Book Store REST API (FastAPI) |
-| 6 🤖 | AI / LLMs | AI Movie Recommender (Claude API) |
-| 7 🧠 | AI Topics | Prompt Engineering, RAG, AI Agents |
+| 🐍 Phase 1 — Python Basics | Variables, conditions, loops, functions | Student Bio Card, Grade Screener |
+| 📦 Phase 2 — Data Types | Lists, dicts, sets, comprehensions | Movie Library Manager, Shopping Cart |
+| 🏗️ Phase 3 — OOP | Classes, inheritance, methods | Library Book System |
+| 🔌 Phase 4 — APIs | requests, JSON, async | Live Weather Fetcher |
+| ⚙️ Phase 5 — Frameworks | FastAPI, routing, Pydantic | Book Store REST API |
+| 🤖 Phase 6 — AI/LLMs | Anthropic SDK, prompting | AI Movie Recommender |
+| 🧠 Phase 7 — AI Topics | Prompt Engineering, RAG, AI Agents | Knowledge Base, Tool-Use Agent |
+
+---
+
+## 💾 Progress Saving
+
+Your progress is automatically saved to `localStorage` every time you:
+- Mark a lesson complete
+- Switch to a new lesson or phase
+- Complete the quiz (best score saved)
+
+When you reopen the file, you'll be taken back to where you left off.
+
+To reset everything, click the 🗑 button in the header (appears once you've completed at least one lesson).
+
+---
+
+## 🔐 API Key Security
+
+> **⚠️ For local / personal use only. Do not host this file on a public server.**
+
+Since this is a local HTML file, API keys stored in `localStorage` are accessible only to your browser on your machine. However, be aware:
+
+| Risk | Level | Notes |
+|---|---|---|
+| Browser extensions | 🟡 Medium | Malicious extensions can read localStorage |
+| Shared computers | 🟡 Medium | Anyone on your machine can read saved keys |
+| XSS / code injection | 🟢 Low | Not a concern for a local file |
+| Network interception | 🟢 Low | Requests go directly from your browser to the API |
+| Public hosting | 🔴 High | **Do not host publicly** — keys would be exposed |
+
+### Best practices
+
+- Set spending limits on your API accounts (all providers support this)
+- Use the **Gemini** free tier to avoid any financial risk
+- Revoke and rotate keys periodically
+- Click **Clear all keys** in the Settings modal when done on a shared machine
+
+### Disclaimer
+
+By using this file, you accept full responsibility for any API keys you store in it and any costs incurred through usage. The author provides no warranty and accepts no liability.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **React 18** — UI (loaded via CDN, no build step)
-- **Babel Standalone** — JSX in the browser
-- **Pyodide 0.24** — Python runtime in WebAssembly
-- **localStorage** — API key persistence (see security note above)
-- Zero dependencies to install
+| Layer | Technology |
+|---|---|
+| UI Framework | React 18 (via CDN) + Babel Standalone |
+| Code Editor | **CodeMirror 5** — Python mode, Dracula/Eclipse themes |
+| Python Runtime | **Pyodide 0.24.1** (Python in WebAssembly) |
+| AI Chat | Gemini / OpenAI / Anthropic REST APIs |
+| Storage | Browser `localStorage` |
+| Dependencies | Zero npm packages — pure CDN |
 
 ---
 
 ## 📄 License
 
-MIT — free to use, modify, and share. Attribution appreciated but not required.
-# Python-Bootcamp
+MIT — free to use, modify, and share.
