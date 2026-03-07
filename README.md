@@ -65,6 +65,22 @@ Keys are stored in your browser's `localStorage` only. They are never transmitte
 
 ---
 
+## 🤖 AI Lessons (Phases 6 & 7)
+
+Phases 6 and 7 teach real AI/LLM programming with live API calls. The code is **automatically adapted** to whichever API key you've saved in ⚙️ Setup AI — no manual editing needed.
+
+| Your key | SDK used | Model |
+|---|---|---|
+| Anthropic | `anthropic` (native) | `claude-haiku-4-5` |
+| OpenAI | `openai` | `gpt-4o-mini` |
+| Gemini | `urllib` (no pip needed) | `gemini-2.0-flash` |
+
+- A ✅ green banner confirms which provider your code is configured for
+- If no key is saved, a 🔑 banner appears with a direct **⚙️ Setup AI →** button
+- Saving a key while a lesson is open instantly injects it into the editor
+
+---
+
 ## 💾 Progress Saving
 
 Your progress is automatically saved to `localStorage` every time you:
