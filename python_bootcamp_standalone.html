@@ -42,10 +42,37 @@
   }
 </style>
 </head>
-<body>
+<body class="dark">
 <div id="root"></div>
+<script>
+window.onerror = function(msg, src, line, col, err) {
+  var d = document.getElementById('loading-screen');
+  if (d) {
+    d.innerHTML = '<div style="color:#e06c75;font-family:monospace;padding:30px;max-width:700px;white-space:pre-wrap">'
+      + '<div style="font-size:20px;margin-bottom:12px">❌ JavaScript Error</div>'
+      + '<div style="font-size:13px;margin-bottom:8px"><b>Message:</b> ' + msg + '</div>'
+      + '<div style="font-size:13px;margin-bottom:8px"><b>Line:</b> ' + line + ' Col: ' + col + '</div>'
+      + '<div style="font-size:12px;color:#94a3b8">' + (src||'') + '</div>'
+      + '</div>';
+  }
+};
+window.addEventListener('unhandledrejection', function(e) {
+  var d = document.getElementById('loading-screen');
+  if (d) {
+    d.innerHTML = '<div style="color:#e06c75;font-family:monospace;padding:30px;max-width:700px;white-space:pre-wrap">'
+      + '<div style="font-size:20px;margin-bottom:12px">❌ Unhandled Promise Rejection</div>'
+      + '<div style="font-size:13px">' + (e.reason?.message || String(e.reason)) + '</div>'
+      + '</div>';
+  }
+});
+</script>
+<div id="loading-screen" style="position:fixed;inset:0;background:#13131f;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:monospace;">
+  <div style="font-size:48px;margin-bottom:16px;">🐍</div>
+  <div style="color:#00D084;font-size:18px;font-weight:bold;">Python Bootcamp</div>
+  <div style="color:#64748b;font-size:13px;margin-top:8px;">Loading...</div><div style="color:#334155;font-size:11px;margin-top:4px;">v2025-03-07c</div>
+</div>
 <script type="text/babel">
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 
 const curriculum = [
   { id:1, phase:"Phase 1", title:"Python Basics", icon:"🐍", color:"#00D084", lessons:[
@@ -112,12 +139,12 @@ const curriculum = [
         {code:'print("-" * 40)', exp:"🖨️ Divider."},
         {code:"", exp:null},
         {code:"for movie in available:", exp:"🔁 Loop through only available movies."},
-        {code:"    print(f\"  🎬 {movie['title']} ({movie['year']}) — {movie['genre']}\")", exp:"🖨️ Prints title, year, genre. Single quotes inside f-string because outer quotes are double."},
+        {code:"    print(movie['title']+'('+str(movie['year'])+') — '+movie['genre'])", exp:"🖨️ Prints title, year, genre."},
         {code:"    print()", exp:"🖨️ Empty print() = blank line for spacing."},
         {code:"", exp:null},
         {code:'new_movie = {"title": "Dune", "year": 2021, "genre": "Sci-Fi", "available": True}', exp:"📦 New movie dictionary."},
         {code:"movies.append(new_movie)", exp:"➕ .append() ADDS item to END of list."},
-        {code:"print(f\"✅ Added: {new_movie['title']} — now {len(movies)} total\")", exp:"🖨️ len() counts items in a list."},
+        {code:"print('✅ Added: '+new_movie['title']+' — now '+str(len(movies))+' total')", exp:"🖨️ len() counts items in a list."},
       ]},
     { id:"2b", title:"Functions", duration:"40 min", project:"🎯 Shopping Cart Calculator",
       memTrick:"💡 def = define a recipe. Parameters = ingredients. return = what the recipe produces. Calling = actually cooking it.",
@@ -189,235 +216,253 @@ const curriculum = [
       ]},
   ]},
   { id:4, phase:"Phase 4", title:"APIs", icon:"🔌", color:"#A78BFA", lessons:[
-    { id:"4a", title:"REST APIs", duration:"60 min", project:"🎯 Live Weather Fetcher",
-      memTrick:"💡 API = restaurant. You send ORDER (request). Kitchen sends FOOD (response/JSON). requests.get() = ordering. .json() = unwrapping food.",
-      concepts:["requests","GET","JSON","status codes","error handling"],
+    { id:"4a", title:"REST APIs & HTTP", duration:"60 min", project:"🎯 Live Weather Fetcher",
+      memTrick:"💡 API = restaurant. You ORDER from a URL. The server sends back JSON. open_url() is Pyodide's built-in browser-safe HTTP fetcher.",
+      concepts:["pyodide.http","GET request","JSON","error handling"],
       lines:[
-        {code:"import requests", exp:"📦 IMPORT — loads external library. Install: pip install requests"},
+        {code:"from pyodide.http import open_url", exp:"📦 open_url = Pyodide's browser-safe HTTP fetcher. Built-in — no pip install needed!"},
+        {code:"import json", exp:"📦 json = built-in parser. Converts JSON text → Python dictionary."},
         {code:"", exp:null},
-        {code:'def fetch_weather(city="New York"):', exp:'🛠️ Function with default parameter — uses "New York" if nothing provided.'},
-        {code:'    url = "https://api.open-meteo.com/v1/forecast"', exp:"📦 The API endpoint URL — the address you're sending your request to."},
-        {code:"    params = {\"latitude\": 40.71, \"longitude\": -74.01, \"current_weather\": True}", exp:"📦 QUERY PARAMS — lat/lon coordinates for New York."},
+        {code:'def fetch_weather(city="New York"):', exp:'🛠️ Function with DEFAULT parameter — uses "New York" if nothing provided.'},
+        {code:'    url = "https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true"', exp:"📦 Free weather API — no key required!"},
+        {code:"    try:", exp:"🛡️ TRY — run this, catch errors below instead of crashing."},
+        {code:"        response = open_url(url)", exp:"🌐 SENDS the GET request. open_url works in Pyodide's browser sandbox."},
+        {code:"        data = json.loads(response.read())", exp:"📦 Reads response and parses JSON → Python dict."},
+        {code:'        weather = data.get("current_weather", {})', exp:"📦 Gets 'current_weather' safely. {} if key missing."},
         {code:"", exp:null},
-        {code:"    try:", exp:"🛡️ TRY — run this code, catch errors below instead of crashing."},
-        {code:"        response = requests.get(url, params=params, timeout=5)", exp:"🌐 SENDS GET REQUEST. timeout=5 = give up after 5 seconds."},
-        {code:"        response.raise_for_status()", exp:"🛡️ Raises exception if error status (404, 500 etc)."},
-        {code:"        data = response.json()", exp:"📦 Converts JSON text response → Python dictionary."},
-        {code:'        weather = data.get("current_weather", {})', exp:"📦 Gets 'current_weather' dict safely. Returns {} if missing."},
-        {code:"", exp:null},
-        {code:'        print(f"✅ Status: {response.status_code} OK")', exp:"🖨️ 200 = success."},
-        {code:'        print(f"🌍 Weather for {city}:")', exp:"🖨️ Prints city name as header."},
-        {code:"", exp:null},
-        {code:'        temp = weather.get("temperature", "N/A")', exp:"📦 Gets temperature from the weather dict."},
+        {code:'        print(f"✅ Weather for {city}:")', exp:"🖨️ Prints city header."},
+        {code:'        temp = weather.get("temperature", "N/A")', exp:"📦 Gets temperature value."},
         {code:'        wind = weather.get("windspeed", "N/A")', exp:"📦 Gets wind speed."},
+        {code:'        wcode = weather.get("weathercode", "?")', exp:"📦 WMO weather code: 0=Clear, 45=Fog, 61=Rain, 71=Snow."},
         {code:'        print(f"  🌡️  Temp  : {temp}°C")', exp:"🖨️ Prints temperature."},
         {code:'        print(f"  💨 Wind  : {wind} km/h")', exp:"🖨️ Prints wind speed."},
+        {code:'        print(f"  🌤  Code  : {wcode}")', exp:"🖨️ Prints weather code."},
+        {code:"    except Exception as e:", exp:"🛡️ Catches any error — network, bad JSON, etc."},
+        {code:'        print(f"❌ Error: {e}")', exp:"🖨️ Friendly error instead of crash."},
         {code:"", exp:null},
-        {code:"    except requests.exceptions.Timeout:", exp:"🛡️ CATCHES timeout error specifically."},
-        {code:'        print("❌ Request timed out")', exp:"🖨️ Friendly message instead of crash."},
-        {code:"    except Exception as e:", exp:"🛡️ Catches ANY other error — the catch-all."},
-        {code:'        print(f"❌ Error: {e}")', exp:"🖨️ Prints unexpected error."},
-        {code:"", exp:null},
-        {code:'fetch_weather("New York")', exp:"▶️ CALLS the function. This line actually runs everything above."},
+        {code:'fetch_weather("New York")', exp:"▶️ Calls the function — fetches live weather and prints it!"},
       ]},
   ]},
   { id:5, phase:"Phase 5", title:"Frameworks", icon:"⚙️", color:"#F59E0B", lessons:[
-    { id:"5a", title:"FastAPI Backend", duration:"90 min", project:"🎯 Book Store REST API",
+    { id:"5a", title:"FastAPI Backend", isSim:true, duration:"90 min", project:"🎯 Book Store REST API",
       memTrick:"💡 @app.get = answer when someone READS. @app.post = answer when someone SENDS. The @ decorator means 'when this URL is called, run the function below'.",
       concepts:["FastAPI","routes","Pydantic","decorators","uvicorn"],
-      lines:[
-        {code:"# pip install fastapi uvicorn pydantic", exp:"💬 Install these before running."},
-        {code:"from fastapi import FastAPI, HTTPException", exp:"📦 FastAPI = web framework. HTTPException = sends proper error responses."},
-        {code:"from pydantic import BaseModel", exp:"📦 Pydantic validates incoming data automatically."},
-        {code:"from typing import List, Optional", exp:"📦 Type hints — List = list type, Optional = may or may not be provided."},
+            lines:[
+        {code:"from fastapi import FastAPI, HTTPException", exp:"📦 FastAPI = the web framework. HTTPException = send error responses."},
+        {code:"from pydantic import BaseModel", exp:"📦 BaseModel = defines data shapes with auto-validation."},
+        {code:"from typing import Optional", exp:"📦 Optional = a field that may or may not be present."},
         {code:"", exp:null},
-        {code:'app = FastAPI(title="Book Store API", version="1.0")', exp:"📦 Creates your app. This 'app' object handles all incoming requests."},
+        {code:"app = FastAPI()", exp:"🏗️ CREATE the app — like Flask's app = Flask(__name__)."},
         {code:"", exp:null},
-        {code:"class Book(BaseModel):", exp:"🏗️ PYDANTIC MODEL — defines what a Book must look like. Auto-validates."},
-        {code:"    title: str", exp:"📦 title must be a STRING. FastAPI rejects wrong types automatically."},
-        {code:"    price: float", exp:"📦 price must be a FLOAT (decimal number)."},
+        {code:"class Book(BaseModel):", exp:"🏗️ DATA MODEL — Pydantic validates incoming JSON automatically."},
+        {code:"    title: str", exp:"📦 title must be a string — enforced automatically."},
+        {code:"    price: float", exp:"📦 price must be a number — auto-converted from JSON."},
         {code:"    category: str", exp:"📦 category must be a string."},
         {code:"", exp:null},
-        {code:"books_db = [", exp:"📦 In-memory database. Real app would use Firebase/SQL."},
-        {code:'    {"id": 1, "title": "Atomic Habits", "price": 16.99, "category": "Self-Help"},', exp:"📦 Sample book."},
-        {code:'    {"id": 2, "title": "Deep Work", "price": 14.99, "category": "Productivity"},', exp:"📦 Sample book."},
-        {code:"]", exp:"📦 End of list."},
+        {code:"books_db = [", exp:"📦 In-memory database — a simple list of dicts."},
+        {code:"    {'id':1, 'title':'Clean Code', 'price':29.99, 'category':'tech'},", exp:"📦 Seed data — book 1."},
+        {code:"    {'id':2, 'title':'Dune', 'price':14.99, 'category':'sci-fi'},", exp:"📦 Seed data — book 2."},
+        {code:"]", exp:"📦 Closes the list."},
         {code:"", exp:null},
-        {code:'@app.get("/")', exp:"🔗 DECORATOR — when someone visits / URL, run the function below it."},
-        {code:"def root():", exp:"🛠️ Function that handles the / route."},
-        {code:'    return {"message": "Welcome to Book Store API! 📚"}', exp:"↩️ FastAPI auto-converts Python dict to JSON response."},
+        {code:"@app.get('/')", exp:"🔗 ROUTE — @app.get('/') maps HTTP GET / to this function."},
+        {code:"def root():", exp:"🛠️ Handler function — runs when someone visits /."},
+        {code:"    return {'message': 'Book Store API', 'total': len(books_db)}", exp:"↩️ FastAPI auto-converts dicts to JSON responses."},
         {code:"", exp:null},
-        {code:'@app.get("/books")', exp:"🔗 Handles GET /books — for reading books."},
-        {code:"def get_books(category: Optional[str] = None):", exp:"🛠️ category is optional query param. URL: /books?category=Self-Help"},
-        {code:"    if category:", exp:"❓ If category was provided..."},
-        {code:'        return [b for b in books_db if b["category"] == category]', exp:"↩️ Filter by category using list comprehension."},
-        {code:"    return books_db", exp:"↩️ No filter — return all books."},
+        {code:"@app.get('/books')", exp:"🔗 GET /books — returns all books or filtered by category."},
+        {code:"def get_books(category: Optional[str] = None):", exp:"🛠️ Query param ?category=tech is auto-parsed by FastAPI."},
+        {code:"    if category:", exp:"❓ Was a category filter provided?"},
+        {code:"        return [b for b in books_db if b['category']==category]", exp:"↩️ Filter and return matching books."},
+        {code:"    return books_db", exp:"↩️ No filter — return everything."},
         {code:"", exp:null},
-        {code:'@app.post("/books", status_code=201)', exp:"🔗 POST /books — for creating new books. 201 = Created."},
-        {code:"def create_book(book: Book):", exp:"🛠️ 'book: Book' — FastAPI expects a Book-shaped JSON body, validates automatically."},
-        {code:"    new_id = len(books_db) + 1", exp:"📦 Simple ID: count + 1."},
-        {code:'    new_book = {"id": new_id, **book.dict()}', exp:"📦 **book.dict() SPREADS dict fields in."},
-        {code:"    books_db.append(new_book)", exp:"➕ Add to database."},
-        {code:"    return new_book", exp:"↩️ Return created book as JSON."},
+        {code:"@app.post('/books')", exp:"🔗 POST /books — creates a new book."},
+        {code:"def create_book(book: Book):", exp:"🛠️ book: Book auto-validates the JSON body against the model."},
+        {code:"    new_book = {'id': len(books_db)+1, **book.dict()}", exp:"📦 ** unpacks the Pydantic model into a dict."},
+        {code:"    books_db.append(new_book)", exp:"📦 Add to our in-memory DB."},
+        {code:"    return new_book", exp:"↩️ Return the created book with its new ID."},
         {code:"", exp:null},
-        {code:"# Run: uvicorn main:app --reload", exp:"💬 Start the server. Docs at http://localhost:8000/docs"},
+        {code:"@app.delete('/books/{book_id}')", exp:"🔗 DELETE /books/1 — path param {book_id} auto-extracted."},
+        {code:"def delete_book(book_id: int):", exp:"🛠️ book_id: int — FastAPI converts the string to int automatically."},
+        {code:"    book = next((b for b in books_db if b['id']==book_id), None)", exp:"📦 Find the book or return None."},
+        {code:"    if not book:", exp:"❓ Does the book exist?"},
+        {code:"        raise HTTPException(status_code=404, detail='Book not found')", exp:"↩️ HTTPException sends a proper 404 JSON error."},
+        {code:"    books_db.remove(book)", exp:"📦 Remove from DB."},
+        {code:"    return {'deleted': book_id}", exp:"↩️ Confirm deletion."}
       ]},
   ]},
   { id:6, phase:"Phase 6", title:"AI / LLMs", icon:"🤖", color:"#EC4899", lessons:[
-    { id:"6a", title:"Claude API", duration:"60 min", project:"🎯 AI Movie Recommender",
+    { id:"6a", title:"AI API — Movie Recommender", duration:"60 min", project:"🎯 AI Movie Recommender",
       memTrick:"💡 LLM call = sending a letter. system = instructions on envelope. messages = conversation history. max_tokens = max words in reply.",
-      concepts:["anthropic SDK","messages","system prompt","tokens"],
-      lines:[
-        {code:"# pip install anthropic", exp:"💬 Install Anthropic SDK first."},
-        {code:"import anthropic, json", exp:"📦 Anthropic SDK + built-in JSON library."},
+      concepts:["REST API","urllib","system prompt","tokens","JSON"],
+                  lines:[
+        {code:"# ✅ Your API key is injected automatically from AI Tutor settings", exp:"💬 SETUP — key + provider injected automatically."},
+        {code:"import json", exp:"📦 json parses the AI's JSON response into a Python dict."},
         {code:"", exp:null},
-        {code:'client = anthropic.Anthropic(api_key="your-key-here")', exp:"📦 Creates API client. Use environment variable in real code!"},
+        {code:"def call_ai(system_prompt, user_message):", exp:"🛠️ Takes a role (system) + task (user) — auto-filled by bootcamp."},
+        {code:"    pass  # auto-filled by bootcamp", exp:"💬 Replaced with real API call when lesson loads."},
         {code:"", exp:null},
-        {code:"def ai_recommend_movie(user_prefs, movies):", exp:"🛠️ Function that sends data to Claude and returns its recommendation."},
-        {code:'    system_prompt = """You are a friendly movie expert.', exp:"📦 SYSTEM PROMPT — sets Claude's role."},
-        {code:"    Return a JSON with: recommendation, score (0-100), reason.", exp:"📦 Tells Claude exactly what format to respond in."},
-        {code:'    Be enthusiastic and concise."""', exp:"📦 End of system prompt."},
+        {code:"def clean_json(text):", exp:"🛠️ Strips markdown fences AI sometimes adds around JSON."},
+        {code:"    text = text.strip()", exp:"📦 Remove leading/trailing whitespace."},
+        {code:"    if text.startswith('```'):", exp:"❓ Did AI wrap response in markdown code block?"},
+        {code:"        lines = text.split('\\n')", exp:"📦 Split into lines."},
+        {code:"        text = '\\n'.join(lines[1:-1])", exp:"📦 Drop first and last lines (the fences)."},
+        {code:"    return text.strip()", exp:"↩️ Return clean JSON string."},
         {code:"", exp:null},
-        {code:'    user_message = f"""User Preferences:', exp:"📦 USER MESSAGE — the actual task sent to Claude."},
-        {code:"    {json.dumps(user_prefs, indent=2)}", exp:"📦 json.dumps() converts Python dict to readable JSON string."},
-        {code:"    Available Movies: {json.dumps(movies, indent=2)}", exp:"📦 Sends the movies list to Claude."},
-        {code:'    Return only valid JSON."""', exp:"📦 Clear instruction — JSON only, no extra text."},
+        {code:"def ai_recommend_movie(user_prefs, movies):", exp:"🛠️ Sends prefs + movies to AI, returns recommendation dict."},
+        {code:"    system_prompt = (", exp:"📦 SYSTEM PROMPT — sets the AI role."},
+        {code:"        'You are a friendly movie expert. '", exp:"📦 The role."},
+        {code:"        'Return a JSON object with keys: recommendation, score (0-100), reason. '", exp:"📦 Exact output format."},
+        {code:"        'Be enthusiastic and concise. Return ONLY valid JSON, no extra text.'", exp:"📦 No markdown, just raw JSON."},
+        {code:"    )", exp:"📦 Closes system_prompt string."},
         {code:"", exp:null},
-        {code:"    message = client.messages.create(", exp:"🌐 CALLS the Claude API."},
-        {code:'        model="claude-opus-4-5",', exp:"📦 Which Claude model to use."},
-        {code:"        max_tokens=500,", exp:"📦 Max response length. 500 tokens ≈ 375 words."},
-        {code:"        messages=[{\"role\": \"user\", \"content\": user_message}],", exp:"📦 Conversation as a list."},
-        {code:"        system=system_prompt", exp:"📦 Passes the system prompt."},
-        {code:"    )", exp:"🌐 End of API call."},
+        {code:"    prefs_str = json.dumps(user_prefs, indent=2)", exp:"📦 Convert prefs dict to readable JSON string."},
+        {code:"    movies_str = json.dumps(movies, indent=2)", exp:"📦 Convert movies list to readable JSON string."},
+        {code:"    user_message = 'User Preferences:\\n' + prefs_str + '\\n\\nAvailable Movies:\\n' + movies_str", exp:"📦 USER MESSAGE — the actual task sent to AI."},
         {code:"", exp:null},
-        {code:"    result = message.content[0].text", exp:"📦 Gets Claude's text response."},
-        {code:"    return json.loads(result)", exp:"↩️ Converts Claude's JSON text → Python dictionary."},
+        {code:"    raw = call_ai(system_prompt, user_message)", exp:"🌐 CALL AI — sends both prompts, returns text response."},
+        {code:"    return json.loads(clean_json(raw))", exp:"↩️ Strip fences then parse JSON → Python dict."},
         {code:"", exp:null},
-        {code:'user_prefs = {"genres": ["sci-fi","thriller"], "mood": "mind-bending"}', exp:"📦 Sample user preferences."},
-        {code:'movies = [{"title":"Inception","genre":"sci-fi"},{"title":"The Notebook","genre":"romance"}]', exp:"📦 Movie options."},
-        {code:"result = ai_recommend_movie(user_prefs, movies)", exp:"▶️ Calls function — sends to Claude, gets recommendation."},
-        {code:"print(f\"Pick: {result['recommendation']}\")", exp:"🖨️ Prints Claude's recommendation."},
-        {code:"print(f\"Why: {result['reason']}\")", exp:"🖨️ Prints Claude's reasoning."},
+        {code:"user_prefs = {'genres': ['sci-fi', 'thriller'], 'mood': 'mind-bending'}", exp:"📦 Sample user preferences."},
+        {code:"movies = [", exp:"📦 Movie options to choose from."},
+        {code:"    {'title': 'Inception', 'genre': 'sci-fi'},", exp:"📦 Movie 1."},
+        {code:"    {'title': 'The Matrix', 'genre': 'sci-fi'},", exp:"📦 Movie 2."},
+        {code:"    {'title': 'The Notebook', 'genre': 'romance'},", exp:"📦 Movie 3."},
+        {code:"]", exp:"📦 Closes movies list."},
+        {code:"", exp:null},
+        {code:"result = ai_recommend_movie(user_prefs, movies)", exp:"▶️ Run it — sends to AI, gets recommendation back."},
+        {code:"print('Pick: ' + result['recommendation'])", exp:"🖨️ Prints AI movie recommendation."},
+        {code:"print('Score: ' + str(result['score']))", exp:"🖨️ Prints confidence score."},
+        {code:"print('Why: ' + result['reason'])", exp:"🖨️ Prints AI reasoning."}
       ]},
   ]},
   { id:7, phase:"Phase 7", title:"AI Topics", icon:"🧠", color:"#f472b6", lessons:[
     { id:"7a", title:"Prompt Engineering", duration:"45 min", project:"🎯 Smart Prompt Builder",
-      memTrick:"💡 Prompt = instructions you give the AI. Better instructions = better output. Think of it like telling a new employee exactly what you want.",
+      memTrick:"💡 Prompt = instructions you give the AI. Better instructions = better output. Think like telling a new employee exactly what you want.",
       concepts:["system prompts","few-shot examples","chain-of-thought","structured output"],
-      lines:[
-        {code:"import anthropic", exp:"📦 IMPORT — loads the Anthropic library."},
-        {code:'client = anthropic.Anthropic(api_key="your-key-here")', exp:"📦 Creates your API connection."},
+                  lines:[
+        {code:"# ✅ Your API key is injected automatically from AI Tutor settings", exp:"💬 SETUP — key injected from settings."},
+        {code:"import json", exp:"📦 json needed by call_ai."},
+        {code:"def call_ai(prompt):", exp:"🛠️ AI function — auto-filled by bootcamp."},
+        {code:"    pass  # auto-filled by bootcamp", exp:"▶️ Replaced with real API call automatically."},
         {code:"", exp:null},
-        {code:"# ---- TECHNIQUE 1: Specific Prompt ----", exp:"💬 Compare vague vs well-engineered prompts."},
-        {code:"vague = 'Write about dogs'", exp:"📦 BAD prompt — too vague. AI doesn't know length, tone, or purpose."},
-        {code:"specific = '''You are a veterinarian writing for new pet owners.", exp:"📦 GOOD prompt — starts with a ROLE for the AI."},
-        {code:"Write a 3-sentence tip about feeding puppies.", exp:"📦 Specifies exact LENGTH and TOPIC."},
-        {code:"Use simple language. End with one actionable tip.'''", exp:"📦 Specifies TONE and FORMAT."},
+        {code:"# --- TECHNIQUE 1: Specific Prompt ---", exp:"💬 Being specific gets better AI answers."},
+        {code:"specific = (", exp:"📦 Multi-line string using parentheses — each string auto-concatenates."},
+        {code:"    'You are a vet writing for new pet owners. '", exp:"📦 Set the role and audience."},
+        {code:"    'Write a 3-sentence tip about feeding puppies. '", exp:"📦 Exact task."},
+        {code:"    'Use simple language. End with one actionable tip.'", exp:"📦 Format instructions."},
+        {code:")", exp:"📦 Closes the parenthesised string."},
         {code:"", exp:null},
-        {code:"# ---- TECHNIQUE 2: Few-Shot Examples ----", exp:"💬 Show the AI examples of what you want before asking."},
-        {code:"few_shot = '''Classify sentiment.", exp:"📦 The task description."},
-        {code:"Text: I love this! -> Positive", exp:"📦 EXAMPLE 1 — shows AI the input/output format."},
-        {code:"Text: This is terrible. -> Negative", exp:"📦 EXAMPLE 2 — more examples = more accurate responses."},
-        {code:"Text: It's okay. -> Neutral", exp:"📦 EXAMPLE 3 — AI understands the pattern."},
-        {code:"Now classify: Text: Best purchase ever!'''", exp:"📦 THE ACTUAL QUESTION — AI uses examples as pattern."},
+        {code:"# --- TECHNIQUE 2: Few-Shot ---", exp:"💬 Show examples so AI learns the pattern."},
+        {code:"few_shot = (", exp:"📦 Few-shot string."},
+        {code:"    'Classify sentiment.\\n'", exp:"📦 Task header. \n = newline."},
+        {code:"    'Text: I love this! -> Positive\\n'", exp:"📦 Example 1."},
+        {code:"    'Text: Terrible. -> Negative\\n'", exp:"📦 Example 2."},
+        {code:"    'Text: Its okay. -> Neutral\\n'", exp:"📦 Example 3."},
+        {code:"    'Now classify: Text: Best purchase ever!'", exp:"📦 The real question."},
+        {code:")", exp:"📦 Closes the string."},
         {code:"", exp:null},
-        {code:"# ---- TECHNIQUE 3: Chain-of-Thought ----", exp:"💬 Ask AI to think step by step before answering."},
-        {code:"cot = '''Solve step by step:", exp:"📦 'Step by step' triggers AI to reason before answering."},
-        {code:"A store has 50 apples. Sells 30% Monday,", exp:"📦 The problem."},
-        {code:"receives 20 more Tuesday. How many now?", exp:"📦 The question."},
-        {code:"Show your reasoning then give final answer.'''", exp:"📦 'Show reasoning' = chain-of-thought trigger."},
+        {code:"# --- TECHNIQUE 3: Chain-of-Thought ---", exp:"💬 Ask AI to reason step-by-step."},
+        {code:"cot = (", exp:"📦 Chain-of-thought string."},
+        {code:"    'A store has 50 apples. Sells 30% on Monday, '", exp:"📦 Problem setup."},
+        {code:"    'receives 20 more on Tuesday. How many now? '", exp:"📦 The question."},
+        {code:"    'Show your reasoning then give the final answer.'", exp:"📦 Forces step-by-step thinking."},
+        {code:")", exp:"📦 Closes the string."},
         {code:"", exp:null},
-        {code:"def test_prompt(prompt, label):", exp:"🛠️ Helper to test any prompt and print results."},
-        {code:"    msg = client.messages.create(", exp:"🌐 Calls Claude API."},
-        {code:"        model='claude-opus-4-5', max_tokens=200,", exp:"📦 Short responses for testing."},
-        {code:"        messages=[{'role':'user','content':prompt}])", exp:"📦 Sends prompt as user message."},
-        {code:"    print(f'=== {label} ===')", exp:"🖨️ Section header."},
-        {code:"    print(msg.content[0].text)", exp:"🖨️ Prints Claude's response."},
+        {code:"def test_prompt(label, prompt):", exp:"🛠️ Helper to run and print each technique."},
+        {code:"    result = call_ai(prompt)", exp:"🌐 Send prompt to AI."},
+        {code:"    print('=== ' + label + ' ===')", exp:"🖨️ Print section header."},
+        {code:"    print(result)", exp:"🖨️ Print AI response."},
+        {code:"    print()", exp:"🖨️ Blank line separator."},
         {code:"", exp:null},
-        {code:"test_prompt(specific, 'Specific Prompt')", exp:"▶️ Tests the well-engineered prompt."},
-        {code:"test_prompt(few_shot, 'Few-Shot')", exp:"▶️ Tests few-shot technique."},
-        {code:"test_prompt(cot, 'Chain-of-Thought')", exp:"▶️ Tests chain-of-thought reasoning."},
+        {code:"test_prompt('Specific Prompt', specific)", exp:"▶️ Test technique 1."},
+        {code:"test_prompt('Few-Shot', few_shot)", exp:"▶️ Test technique 2."},
+        {code:"test_prompt('Chain-of-Thought', cot)", exp:"▶️ Test technique 3."}
       ]},
     { id:"7b", title:"RAG — Retrieval Augmented Generation", duration:"60 min", project:"🎯 Knowledge Base Q&A",
-      memTrick:"💡 RAG = Give AI a reference book before asking questions. Without RAG, AI only knows training data. With RAG, it answers from YOUR documents.",
-      concepts:["embeddings","vector search","context injection","chunking","semantic search"],
-      lines:[
-        {code:"import anthropic, json", exp:"📦 Anthropic SDK + JSON library."},
+      memTrick:"💡 RAG = Give AI a reference book before asking. Without RAG, AI only knows training data. With RAG, it answers from YOUR documents.",
+      concepts:["retrieval","context injection","chunking","keyword search","grounding"],
+                  lines:[
+        {code:"# ✅ Your API key is injected automatically from AI Tutor settings", exp:"💬 SETUP — key injected from settings."},
+        {code:"import json", exp:"📦 json needed by call_ai."},
+        {code:"def call_ai(prompt):", exp:"🛠️ AI function — auto-filled by bootcamp."},
+        {code:"    pass  # auto-filled by bootcamp", exp:"▶️ Replaced with real API call."},
         {code:"", exp:null},
-        {code:"knowledge_base = [", exp:"📦 YOUR documents — in real RAG these come from PDFs, databases, websites."},
-        {code:'    {"topic": "Python Lists", "content": "Lists store ordered items. Use append() to add, pop() to remove, len() to count."},', exp:"📦 DOCUMENT 1 — a chunk of knowledge."},
-        {code:'    {"topic": "Python Dicts", "content": "Dicts store key-value pairs. Use dict[key] to access, .get() for safe access."},', exp:"📦 DOCUMENT 2."},
-        {code:'    {"topic": "Python Functions", "content": "Define with def. Use parameters for inputs, return for outputs."},', exp:"📦 DOCUMENT 3."},
-        {code:"]", exp:"📦 End of knowledge base."},
+        {code:"knowledge_base = [", exp:"📦 STORE — our mini database of Python facts."},
+        {code:"    {'topic': 'Python Lists', 'content': 'Use append() to add, pop() to remove, len() to count.'},", exp:"📦 Doc 1."},
+        {code:"    {'topic': 'Python Dicts', 'content': 'Use dict[key] to access, .get() for safe access.'},", exp:"📦 Doc 2."},
+        {code:"    {'topic': 'Python Functions', 'content': 'Define with def. Use return for outputs.'},", exp:"📦 Doc 3."},
+        {code:"    {'topic': 'Python Classes', 'content': 'self refers to the instance. __init__ is the constructor.'},", exp:"📦 Doc 4."},
+        {code:"]", exp:"📦 Closes knowledge_base list."},
         {code:"", exp:null},
-        {code:"def retrieve(query, kb, top_k=2):", exp:"🛠️ Finds most relevant documents. In real RAG, uses VECTOR EMBEDDINGS."},
-        {code:"    words = query.lower().split()", exp:"📦 Splits query into words."},
-        {code:"    scores = []", exp:"📦 Empty list for relevance scores."},
-        {code:"    for doc in kb:", exp:"🔁 Loop through each document."},
-        {code:"        text = (doc['topic']+' '+doc['content']).lower()", exp:"📦 Combines topic + content for searching."},
-        {code:"        score = sum(1 for w in words if w in text)", exp:"📦 Counts how many query words appear. More = higher score."},
-        {code:"        scores.append((score, doc))", exp:"📦 Stores (score, doc) tuple."},
-        {code:"    scores.sort(reverse=True)", exp:"📦 Sorts highest relevance first."},
-        {code:"    return [doc for _, doc in scores[:top_k]]", exp:"↩️ Returns top_k most relevant docs."},
+        {code:"def retrieve(query, kb, top_k=2):", exp:"🛠️ RETRIEVE — find most relevant docs by keyword match."},
+        {code:"    words = query.lower().split()", exp:"📦 Split query into words."},
+        {code:"    scores = []", exp:"📦 Will hold (score, doc) pairs."},
+        {code:"    for doc in kb:", exp:"🔁 Check every document."},
+        {code:"        text = (doc['topic'] + ' ' + doc['content']).lower()", exp:"📦 Combine topic + content for matching."},
+        {code:"        score = sum(1 for w in words if w in text)", exp:"📦 Count matching words — simple relevance score."},
+        {code:"        scores.append((score, doc))", exp:"📦 Save score paired with doc."},
+        {code:"    scores.sort(key=lambda x: x[0], reverse=True)", exp:"📦 Sort: highest score first."},
+        {code:"    return [doc for _, doc in scores[:top_k]]", exp:"↩️ Return top_k most relevant docs."},
         {code:"", exp:null},
-        {code:"def rag_answer(question):", exp:"🛠️ Full RAG pipeline in one function."},
-        {code:"    docs = retrieve(question, knowledge_base)", exp:"📦 RETRIEVE — find relevant documents."},
-        {code:"    context = '\\n'.join([f\"{d['topic']}: {d['content']}\" for d in docs])", exp:"📦 AUGMENT — format docs into a context string."},
-        {code:"    prompt = f'''Use ONLY this context to answer:", exp:"📦 GENERATE prompt — tells AI to use only our docs."},
-        {code:"    Context: {context}", exp:"📦 INJECTS retrieved documents — this is the core of RAG."},
-        {code:"    Question: {question}", exp:"📦 The user's actual question."},
-        {code:"    Answer concisely from context only.'''", exp:"📦 Stay grounded in provided context."},
-        {code:"    client = anthropic.Anthropic(api_key='your-key')", exp:"📦 API client."},
-        {code:"    msg = client.messages.create(model='claude-opus-4-5', max_tokens=150,", exp:"🌐 Calls Claude with the augmented prompt."},
-        {code:"        messages=[{'role':'user','content':prompt}])", exp:"📦 Sends RAG prompt."},
-        {code:"    print(f'Q: {question}')", exp:"🖨️ Prints question."},
-        {code:"    print(f'Retrieved: {[d[\"topic\"] for d in docs]}')", exp:"🖨️ Shows WHICH docs were retrieved — key for debugging."},
-        {code:"    print(f'A: {msg.content[0].text}\\n')", exp:"🖨️ Prints AI's grounded answer."},
+        {code:"def rag_answer(question):", exp:"🛠️ FULL RAG PIPELINE — retrieve then generate."},
+        {code:"    docs = retrieve(question, knowledge_base)", exp:"🔍 Step 1: RETRIEVE relevant docs."},
+        {code:"    context = '\\n'.join([d['topic'] + ': ' + d['content'] for d in docs])", exp:"📦 Step 2: AUGMENT — format docs as context."},
+        {code:"    prompt = 'Context:\\n' + context + '\\n\\nQuestion: ' + question + '\\nAnswer concisely.'", exp:"📦 Step 3: Build grounded prompt."},
+        {code:"    answer = call_ai(prompt)", exp:"🌐 Step 4: GENERATE answer from context."},
+        {code:"    print('Q: ' + question)", exp:"🖨️ Print question."},
+        {code:"    print('Retrieved:', [d['topic'] for d in docs])", exp:"🖨️ Show which docs were used."},
+        {code:"    print('A: ' + str(answer))", exp:"🖨️ Print grounded answer."},
+        {code:"    print()", exp:"🖨️ Blank line."},
         {code:"", exp:null},
-        {code:"rag_answer('How do I add items to a list?')", exp:"▶️ Test 1 — should retrieve the Lists document."},
-        {code:"rag_answer('What is self in a class?')", exp:"▶️ Test 2 — should retrieve Functions/Classes docs."},
+        {code:"rag_answer('How do I add items to a list?')", exp:"▶️ Should retrieve Python Lists doc."},
+        {code:"rag_answer('What is self in a class?')", exp:"▶️ Should retrieve Python Classes doc."}
       ]},
     { id:"7c", title:"AI Agents & Tools", duration:"60 min", project:"🎯 Personal Assistant Agent",
-      memTrick:"💡 Agent = AI that can DECIDE and ACT. Normal AI: you ask, it answers. Agent: you give a goal, it picks tools, takes steps, completes task autonomously.",
-      concepts:["tool use","function calling","agent loop","tool results","multi-step reasoning"],
-      lines:[
-        {code:"import anthropic, json", exp:"📦 Anthropic SDK + JSON."},
-        {code:"from datetime import datetime", exp:"📦 Built-in datetime — used in our tools."},
-        {code:"client = anthropic.Anthropic(api_key='your-key')", exp:"📦 API client."},
+      memTrick:"💡 Agent = AI that can DECIDE and ACT. Normal AI: you ask, it answers. Agent: you give a goal, it picks tools, takes steps, completes autonomously.",
+      concepts:["tool use","agent loop","function calling","multi-step reasoning"],
+                  lines:[
+        {code:"# ✅ Your API key is injected automatically from AI Tutor settings", exp:"💬 SETUP — key injected from settings."},
+        {code:"import json", exp:"📦 json needed by call_ai."},
+        {code:"from datetime import datetime", exp:"📦 For the get_time tool."},
+        {code:"def call_ai(prompt):", exp:"🛠️ AI function — auto-filled by bootcamp."},
+        {code:"    pass  # auto-filled by bootcamp", exp:"▶️ Replaced with real API call."},
         {code:"", exp:null},
-        {code:"tools = [", exp:"📦 LIST of tool definitions — Claude reads these to know what it can use."},
-        {code:"  {'name': 'get_weather', 'description': 'Get weather for a city',", exp:"📦 Tool name + description. Claude decides WHEN to use it from the description."},
-        {code:"   'input_schema': {'type':'object','properties':{'city':{'type':'string'}},'required':['city']}},", exp:"📦 What inputs this tool needs."},
-        {code:"  {'name': 'calculate', 'description': 'Perform math calculations',", exp:"📦 Calculator tool."},
-        {code:"   'input_schema': {'type':'object','properties':{'expression':{'type':'string'}},'required':['expression']}},", exp:"📦 Takes a math expression string."},
-        {code:"  {'name': 'get_time', 'description': 'Get current date and time',", exp:"📦 Time tool — no inputs needed."},
-        {code:"   'input_schema': {'type':'object','properties':{},'required':[]}}]", exp:"📦 Empty properties = no inputs required."},
+        {code:"def get_weather(city):", exp:"🛠️ Tool 1 — fake weather lookup."},
+        {code:"    return 'Weather in ' + city + ': 22 degrees, Sunny'", exp:"↩️ Returns fake weather string."},
         {code:"", exp:null},
-        {code:"def run_tool(name, inputs):", exp:"🛠️ Routes tool calls to the right function."},
-        {code:"    if name == 'get_weather':", exp:"❓ If Claude called weather tool..."},
-        {code:"        return f\"Weather in {inputs['city']}: 22°C, Sunny\"", exp:"↩️ Mock weather. Real version calls weather API."},
-        {code:"    elif name == 'calculate':", exp:"❓ If Claude called calculator..."},
-        {code:"        return f\"Result: {eval(inputs['expression'])}\"", exp:"↩️ eval() runs math expression. eval('25*4') = 100."},
-        {code:"    elif name == 'get_time':", exp:"❓ If Claude called time tool..."},
-        {code:"        return f\"Time: {datetime.now().strftime('%Y-%m-%d %H:%M')}\"", exp:"↩️ Returns formatted current date/time."},
+        {code:"def calculate(expression):", exp:"🛠️ Tool 2 — calculator."},
+        {code:"    return 'Result: ' + str(eval(expression))", exp:"↩️ eval('25*4') computes to 100."},
         {code:"", exp:null},
-        {code:"def run_agent(user_message):", exp:"🛠️ Main agent — takes a goal and completes it autonomously."},
-        {code:"    messages = [{'role':'user','content':user_message}]", exp:"📦 Conversation history — starts with user's request."},
-        {code:"    while True:", exp:"🔁 AGENT LOOP — keeps going until Claude stops calling tools."},
-        {code:"        response = client.messages.create(", exp:"🌐 Calls Claude with tools available."},
-        {code:"            model='claude-opus-4-5', max_tokens=500,", exp:"📦 Model and token limit."},
-        {code:"            tools=tools, messages=messages)", exp:"📦 Passes tools + full conversation history."},
-        {code:"        if response.stop_reason == 'end_turn':", exp:"❓ 'end_turn' = Claude is DONE — no more tools needed."},
-        {code:"            print(f'🤖 {response.content[0].text}')", exp:"🖨️ Prints Claude's final answer."},
-        {code:"            break", exp:"▶️ EXIT the loop."},
-        {code:"        for block in response.content:", exp:"🔁 Loop through response blocks."},
-        {code:"            if block.type == 'tool_use':", exp:"❓ If this block is a tool call..."},
-        {code:"                result = run_tool(block.name, block.input)", exp:"📦 EXECUTES the tool — runs our Python function."},
-        {code:"                messages.append({'role':'assistant','content':response.content})", exp:"📦 Adds Claude's tool call to history."},
-        {code:"                messages.append({'role':'user','content':[{'type':'tool_result','tool_use_id':block.id,'content':result}]})", exp:"📦 Adds tool result back — Claude reads this to continue."},
-        {code:"                break", exp:"▶️ Process one tool at a time, then loop."},
+        {code:"def get_time():", exp:"🛠️ Tool 3 — current time."},
+        {code:"    return str(datetime.now())[:16]", exp:"↩️ Returns formatted datetime string."},
         {code:"", exp:null},
-        {code:"run_agent('What is the weather in Tokyo and 15% of 85?')", exp:"▶️ Agent calls BOTH weather and calculator tools."},
+        {code:"tools_desc = 'get_weather(city), calculate(expression), get_time()'", exp:"📦 Tool list as a string — passed to AI."},
+        {code:"", exp:null},
+        {code:"def run_agent(user_request):", exp:"🛠️ Main agent — takes a goal and uses tools."},
+        {code:"    print('Request: ' + user_request)", exp:"🖨️ Shows the user goal."},
+        {code:"    prompt = 'You have tools: ' + tools_desc + '\\n'", exp:"📦 Tell AI what tools exist."},
+        {code:"    prompt += 'Request: ' + user_request + '\\n'", exp:"📦 Add the user request."},
+        {code:"    prompt += 'For each tool needed write: TOOL: name(arg)\\n'", exp:"📦 Instruct AI to use TOOL: format."},
+        {code:"    prompt += 'Then write a one-sentence summary.'", exp:"📦 Ask for a final summary."},
+        {code:"    response = call_ai(prompt)", exp:"🌐 AI decides which tools to call."},
+        {code:"    results = []", exp:"📦 Collect tool results here."},
+        {code:"    for line in response.split('\\n'):", exp:"🔁 Scan each line of AI response for TOOL: calls."},
+        {code:"        if 'TOOL: get_weather(' in line:", exp:"❓ Did AI request the weather tool?"},
+        {code:"            city = line.split('(')[1].split(')')[0]", exp:"📦 Extract city from TOOL: get_weather(Tokyo)."},
+        {code:"            results.append(get_weather(city))", exp:"▶️ Run the tool, store result."},
+        {code:"        elif 'TOOL: calculate(' in line:", exp:"❓ Did AI request the calculator?"},
+        {code:"            expr = line.split('(')[1].split(')')[0]", exp:"📦 Extract expression from TOOL: calculate(15*0.85)."},
+        {code:"            results.append(calculate(expr))", exp:"▶️ Run the calculator, store result."},
+        {code:"        elif 'TOOL: get_time' in line:", exp:"❓ Did AI request the time tool?"},
+        {code:"            results.append(get_time())", exp:"▶️ Run get_time(), store result."},
+        {code:"    if results:", exp:"❓ Were any tools called?"},
+        {code:"        print('Tool results: ' + str(results))", exp:"🖨️ Show what the tools returned."},
+        {code:"    non_empty = [l for l in response.split('\\n') if l.strip()]", exp:"📦 Filter out empty lines."},
+        {code:"    if non_empty:", exp:"❓ Did AI respond at all?"},
+        {code:"        print('AI: ' + non_empty[-1])", exp:"🖨️ Print AI final summary line."},
+        {code:"    print()", exp:"🖨️ Blank line separator."},
+        {code:"", exp:null},
+        {code:"run_agent('What is the weather in Tokyo and what is 15 percent of 85?')", exp:"▶️ Agent should call weather + calculator."},
+        {code:"run_agent('What time is it right now?')", exp:"▶️ Agent should use the time tool."}
       ]},
   ]},
 ];
@@ -436,11 +481,606 @@ const QUIZ = [
 ];
 
 
+/* ── FASTAPI SIMULATOR ──────────────────────────────────────────── */
+function FastAPISim({ T, D, phase }) {
+  const GITHUB_URL = "https://github.com/mysnoopy/Python-Bootcamp";
+  const CLONE_CMD  = "git clone https://github.com/mysnoopy/Python-Bootcamp.git";
+  const CD_CMD     = "cd Python-Bootcamp";
+
+  const initDb = () => [
+    {id:1, title:"Clean Code",                price:29.99, category:"tech"},
+    {id:2, title:"Dune",                      price:14.99, category:"sci-fi"},
+    {id:3, title:"The Pragmatic Programmer",  price:34.99, category:"tech"},
+  ];
+
+  /* ── state ── */
+  const [db,       setDb]       = React.useState(initDb());
+  const [log,      setLog]      = React.useState([]);
+  const [newBook,  setNewBook]  = React.useState({title:"",price:"",category:""});
+  const [filter,   setFilter]   = React.useState("");
+  const [deleteId, setDeleteId] = React.useState("");
+  const [simTab,   setSimTab]   = React.useState("GET /books");
+  const [mainView, setMainView] = React.useState("simulator"); // simulator | tutorial | local
+  const [checks,   setChecks]   = React.useState({});
+  const [copied2,  setCopied2]  = React.useState(null);
+  const [liveMode, setLiveMode] = React.useState(false);   // false=mock, true=localhost
+  const [liveUrl,  setLiveUrl]  = React.useState("http://localhost:8000");
+  const [liveStatus, setLiveStatus] = React.useState(null); // null|"ok"|"err"|"cors"
+  /* tutorial */
+  const [tutStep,  setTutStep]  = React.useState(0);
+  const [tutInput, setTutInput] = React.useState({});
+  const [tutLog,   setTutLog]   = React.useState([]);
+  const tutCmRef      = React.useRef(null);
+  const tutDivRef     = React.useRef(null);
+  const postTitleRef    = React.useRef(null);
+  const postPriceRef    = React.useRef(null);
+  const postCategoryRef = React.useRef(null);
+
+  /* ── Tutorial CodeMirror — mount when div becomes visible ── */
+  React.useEffect(() => {
+    if (mainView !== "tutorial") return;
+    // give React one tick to render the div
+    const tid = setTimeout(() => {
+      if (!tutDivRef.current) return;
+      if (tutCmRef.current) {
+        // already mounted — just update value + theme
+        tutCmRef.current.setValue(TUT_STEPS[tutStep].code);
+        tutCmRef.current.setOption("theme", D ? "dracula" : "eclipse");
+        return;
+      }
+      const cm = CodeMirror(tutDivRef.current, {
+        value:            TUT_STEPS[tutStep].code,
+        mode:             "python",
+        theme:            D ? "dracula" : "eclipse",
+        lineNumbers:      true,
+        matchBrackets:    true,
+        autoCloseBrackets:true,
+        readOnly:         true,
+      });
+      tutCmRef.current = cm;
+    }, 30);
+    return () => clearTimeout(tid);
+  }, [mainView]);                         // re-fires when we switch TO tutorial
+
+  /* update code + theme when step or theme changes */
+  React.useEffect(() => {
+    if (!tutCmRef.current) return;
+    tutCmRef.current.setValue(TUT_STEPS[tutStep].code);
+    tutCmRef.current.setOption("theme", D ? "dracula" : "eclipse");
+    setTutInput({});
+    setTutLog([]);
+  }, [tutStep, D]);
+
+  /* ── Tutorial steps ── */
+  const TUT_STEPS = [
+    { title:"1. Create the App",
+      concept:"FastAPI starts with one line — app = FastAPI(). The @app.get decorator maps a URL to a Python function. FastAPI auto-converts the returned dict to JSON.",
+      code:"from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get('/')\ndef root():\n    return {'message': 'Hello FastAPI!'}",
+      action:{method:"GET", url:"/", label:"GET /"},
+      hint:"Hit ▶ Run to call GET / and see the JSON response.",
+      run:(_db,_i) => ({status:200, resp:{"message":"Hello FastAPI!"}}) },
+    { title:"2. Return a list",
+      concept:"Return a Python list — FastAPI converts it to a JSON array automatically. No serialization needed.",
+      code:"from fastapi import FastAPI\n\napp = FastAPI()\nbooks_db = [\n    {'id':1,'title':'Clean Code','price':29.99,'category':'tech'},\n    {'id':2,'title':'Dune','price':14.99,'category':'sci-fi'},\n]\n\n@app.get('/books')\ndef get_books():\n    return books_db",
+      action:{method:"GET", url:"/books", label:"GET /books"},
+      hint:"Run it — the list comes back as a JSON array.",
+      run:(db,_i) => ({status:200, resp:db}) },
+    { title:"3. Query Parameters",
+      concept:"Add a typed parameter to the function — FastAPI reads it from ?category=tech in the URL automatically. Optional[str] = None means it defaults to None if not provided.",
+      code:"from fastapi import FastAPI\nfrom typing import Optional\n\napp = FastAPI()\nbooks_db = [\n    {'id':1,'title':'Clean Code','price':29.99,'category':'tech'},\n    {'id':2,'title':'Dune','price':14.99,'category':'sci-fi'},\n]\n\n@app.get('/books')\ndef get_books(category: Optional[str] = None):\n    if category:\n        return [b for b in books_db if b['category']==category]\n    return books_db",
+      action:{method:"GET", url:"/books?category=tech", label:"GET /books?category=tech"},
+      hint:"Run it — only 'tech' books come back. Try changing the category below.",
+      inputs:[{key:"category", placeholder:"tech, sci-fi, or leave blank for all"}],
+      run:(db,inp) => ({status:200, resp: inp.category ? db.filter(b=>b.category===inp.category) : db}) },
+    { title:"4. Pydantic Validation",
+      concept:"BaseModel defines the shape of POST body JSON. FastAPI validates it automatically — wrong type = 422 error. **book.dict() unpacks the model into a regular dict.",
+      code:"from fastapi import FastAPI\nfrom pydantic import BaseModel\n\napp = FastAPI()\nbooks_db = []\n\nclass Book(BaseModel):\n    title: str\n    price: float\n    category: str\n\n@app.post('/books', status_code=201)\ndef create_book(book: Book):\n    new = {'id': len(books_db)+1, **book.dict()}\n    books_db.append(new)\n    return new",
+      action:{method:"POST", url:"/books", label:"POST /books"},
+      hint:"Fill all 3 fields and run for a 201. Leave price empty to trigger a 422.",
+      inputs:[
+        {key:"title",    placeholder:"e.g. Atomic Habits"},
+        {key:"price",    placeholder:"e.g. 19.99"},
+        {key:"category", placeholder:"e.g. self-help"},
+      ],
+      run:(db,inp) => {
+        const title=(inp.title||"").trim(), priceStr=(inp.price||"").trim(), category=(inp.category||"").trim();
+        if(!title||!priceStr||!category) return {status:422, resp:{detail:"Validation error: all fields required"}};
+        const price=parseFloat(priceStr);
+        if(isNaN(price)) return {status:422, resp:{detail:"Validation error: price must be a number"}};
+        const book={id:db.length+1, title:inp.title, price, category:inp.category};
+        return {status:201, resp:book, newBook:book};
+      }},
+    { title:"5. Path Params & 404",
+      concept:"Curly braces {book_id} in the route become typed function parameters. HTTPException(status_code=404) sends a proper JSON error response — not a Python crash.",
+      code:"from fastapi import FastAPI, HTTPException\n\napp = FastAPI()\nbooks_db = [\n    {'id':1,'title':'Clean Code','price':29.99,'category':'tech'},\n    {'id':2,'title':'Dune','price':14.99,'category':'sci-fi'},\n]\n\n@app.delete('/books/{book_id}')\ndef delete_book(book_id: int):\n    book = next((b for b in books_db if b['id']==book_id), None)\n    if not book:\n        raise HTTPException(status_code=404, detail='Book not found')\n    books_db.remove(book)\n    return {'deleted': book_id}",
+      action:{method:"DELETE", url:"/books/{id}", label:"DELETE /books/{id}"},
+      hint:"Try ID 1 → 200 success. Try ID 99 → 404 error.",
+      inputs:[{key:"id", placeholder:"e.g. 1 for success, 99 for 404"}],
+      run:(db,inp) => {
+        const id=parseInt(inp.id||"");
+        const book=db.find(b=>b.id===id);
+        if(!book) return {status:404, resp:{detail:"Book not found"}};
+        return {status:200, resp:{deleted:id}, deleteId:id};
+      }},
+  ];
+
+  /* ── run tutorial step (mock) ── */
+  const runTutStep = () => {
+    const step = TUT_STEPS[tutStep];
+    const result = step.run(db, tutInput);
+    setTutLog(l => [{id:Date.now(), method:step.action.method, url:step.action.url, status:result.status, resp:JSON.stringify(result.resp,null,2), time:new Date().toLocaleTimeString()}, ...l]);
+    if (result.newBook)  setDb(d => [...d, result.newBook]);
+    if (result.deleteId) setDb(d => d.filter(b => b.id !== result.deleteId));
+  };
+
+  /* ── live server ping ── */
+  const pingServer = async () => {
+    setLiveStatus(null);
+    try {
+      const r = await fetch(liveUrl + "/", {method:"GET"});
+      setLiveStatus(r.ok ? "ok" : "err");
+    } catch(e) {
+      // TypeError with "fetch" usually means CORS preflight blocked or server not running
+      // If server is up but no CORS headers, fetch throws TypeError too — we show cors hint
+      const msg = e.message || "";
+      // Try a no-cors mode ping just to see if the server is reachable at all
+      try {
+        await fetch(liveUrl + "/", {method:"GET", mode:"no-cors"});
+        // If we get here, server IS running but CORS is blocked
+        setLiveStatus("cors");
+      } catch(_e) {
+        setLiveStatus("err");
+      }
+    }
+  };
+
+  /* ── live fetch helper ── */
+  const liveFetch = async (method, path, body) => {
+    const opts = { method, headers:{"Content-Type":"application/json"} };
+    if (body) opts.body = JSON.stringify(body);
+    const t0 = Date.now();
+    try {
+      const r   = await fetch(liveUrl + path, opts);
+      const txt = await r.text();
+      let resp; try { resp = JSON.parse(txt); } catch(_e) { resp = txt; }
+      return { status:r.status, resp, ms:Date.now()-t0 };
+    } catch(e) {
+      return { status:0, resp:{error:"Cannot connect — is the server running? " + e.message}, ms:Date.now()-t0 };
+    }
+  };
+
+  /* ── simulator helpers ── */
+  const methodColor = m => ({GET:"#61afef",POST:"#98c379",DELETE:"#e06c75",PUT:"#e5c07b"}[m]||"#abb2bf");
+  const statusColor = s => s===0?"#fc8181":s<300?"#98c379":s<400?"#e5c07b":"#e06c75";
+  const copy2 = (text, key) => { navigator.clipboard.writeText(text).then(()=>{ setCopied2(key); setTimeout(()=>setCopied2(null),1800); }); };
+  const toggleCheck = k => setChecks(c=>({...c,[k]:!c[k]}));
+
+  const addLog = (method,url,status,body,resp) => {
+    setLog(l=>[{id:Date.now(),method,url,status,body:body?JSON.stringify(body,null,2):null,resp:JSON.stringify(resp,null,2),time:new Date().toLocaleTimeString()},...l.slice(0,19)]);
+  };
+
+  /* ── simulator actions (mock OR live) ── */
+  const doGetRoot = async () => {
+    if (liveMode) { const r=await liveFetch("GET","/"); addLog("GET","/",r.status,null,r.resp); }
+    else addLog("GET","/",200,null,{message:"Book Store API",total:db.length});
+  };
+  const doGet = async () => {
+    const path = filter ? "/books?category="+encodeURIComponent(filter) : "/books";
+    if (liveMode) { const r=await liveFetch("GET",path); addLog("GET",path,r.status,null,r.resp); }
+    else { const filtered=filter?db.filter(b=>b.category===filter):db; addLog("GET",path,200,null,filtered); }
+  };
+  const doPost = async () => {
+    const title=(postTitleRef.current?.value||"").trim();
+    const priceStr=(postPriceRef.current?.value||"").trim();
+    const category=(postCategoryRef.current?.value||"").trim();
+    if (!title||!priceStr||!category) { addLog("POST","/books",422,{title,price:priceStr,category},{detail:"Validation error: all fields required"}); return; }
+    const price=parseFloat(priceStr);
+    if (isNaN(price)) { addLog("POST","/books",422,{title,price:priceStr,category},{detail:"Validation error: price must be a number"}); return; }
+    const body={title,price,category};
+    if (liveMode) { const r=await liveFetch("POST","/books",body); addLog("POST","/books",r.status,body,r.resp); }
+    else { const book={id:db.length+1,...body}; setDb(d=>[...d,book]); setNewBook({title:"",price:"",category:""}); addLog("POST","/books",201,body,book); }
+    if (!liveMode) setNewBook({title:"",price:"",category:""});
+  };
+  const doDelete = async () => {
+    const id=parseInt(deleteId);
+    if (liveMode) { const r=await liveFetch("DELETE","/books/"+id); addLog("DELETE","/books/"+id,r.status,null,r.resp); }
+    else {
+      const book=db.find(b=>b.id===id);
+      if (!book) { addLog("DELETE","/books/"+deleteId,404,null,{detail:"Book not found"}); return; }
+      setDb(d=>d.filter(b=>b.id!==id)); setDeleteId("");
+      addLog("DELETE","/books/"+id,200,null,{deleted:id});
+    }
+  };
+
+  const simTabs=["GET /","GET /books","POST /books","DELETE /books/{id}"];
+  const tabColor=t=>t.startsWith("GET")?"#61afef":t.startsWith("POST")?"#98c379":"#e06c75";
+
+  const steps=[
+    {key:"python",num:1,title:"Install Python",
+      body:'Download Python 3.10+ from python.org. Check "Add Python to PATH" during setup.',
+      links:[{label:"python.org/downloads →",href:"https://www.python.org/downloads/"}],cmd:null},
+    {key:"install",num:2,title:"Install FastAPI & Uvicorn",
+      body:"Open Terminal (Mac) or Command Prompt (Windows) and run:",
+      cmd:"pip install fastapi uvicorn pydantic",links:[]},
+    {key:"clone",num:3,title:"Clone the repo",
+      body:"Clone the Python Bootcamp repo — main.py is already inside:",
+      cmd:CLONE_CMD,links:[{label:"View on GitHub →",href:GITHUB_URL}],cdCmd:CD_CMD},
+    {key:"run",num:4,title:"Start the server",
+      body:"Inside the cloned folder, run:",
+      cmd:"uvicorn main:app --reload",links:[],
+      note:"main.py already includes CORS middleware so the Live simulator can connect from your browser."},
+    {key:"open",num:5,title:"Open interactive docs",
+      body:"FastAPI auto-generates a live playground at /docs — try all endpoints here:",
+      cmd:null,links:[
+        {label:"localhost:8000/docs →",href:"http://localhost:8000/docs"},
+        {label:"localhost:8000/books →",href:"http://localhost:8000/books"},
+      ]},
+  ];
+  const doneCount=steps.filter(s=>checks[s.key]).length;
+
+  /* ── NavBtn ── */
+  const NavBtn=({v,label})=>(
+    <button onClick={()=>setMainView(v)}
+      style={{background:mainView===v?"#fb923c":T.bgRaised,color:mainView===v?"#000":T.textDim,
+        border:"none",borderRadius:5,padding:"3px 10px",fontSize:12,cursor:"pointer",fontWeight:mainView===v?"bold":"normal"}}>
+      {label}
+    </button>
+  );
+
+  /* ── Response log card ── */
+  const LogCard=({entry})=>(
+    <div style={{background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:6,marginBottom:8,overflow:"hidden"}}>
+      <div style={{padding:"6px 10px",borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",gap:8}}>
+        <span style={{color:methodColor(entry.method),fontWeight:"bold",fontSize:12}}>{entry.method}</span>
+        <span style={{color:T.text,fontSize:12,fontFamily:"monospace",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{entry.url}</span>
+        <span style={{color:statusColor(entry.status),fontWeight:"bold",fontSize:12,flexShrink:0}}>{entry.status||"ERR"}</span>
+        <span style={{color:T.textFnt,fontSize:11,flexShrink:0}}>{entry.time}</span>
+      </div>
+      {entry.body&&(
+        <div style={{padding:"6px 10px",borderBottom:`1px solid ${T.border}`}}>
+          <div style={{fontSize:10,color:T.textDim,marginBottom:2}}>REQUEST BODY</div>
+          <pre style={{margin:0,fontSize:11,color:"#e5c07b",whiteSpace:"pre-wrap"}}>{entry.body}</pre>
+        </div>
+      )}
+      <div style={{padding:"6px 10px"}}>
+        <div style={{fontSize:10,color:T.textDim,marginBottom:2}}>RESPONSE</div>
+        <pre style={{margin:0,fontSize:11,color:entry.status>=400||entry.status===0?"#e06c75":"#98c379",whiteSpace:"pre-wrap"}}>{entry.resp}</pre>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",background:T.bgDeep,overflow:"hidden",minWidth:220}}>
+
+      {/* ── top nav ── */}
+      <div style={{padding:"5px 10px",borderBottom:`1px solid ${T.border}`,background:T.bgDeep,flexShrink:0,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+        <span style={{fontSize:12,color:"#fb923c",fontWeight:"bold",marginRight:4}}>⚡ FastAPI</span>
+        <NavBtn v="simulator" label="🖥 Simulator"/>
+        <NavBtn v="tutorial"  label="📖 Tutorial"/>
+        <NavBtn v="local"     label="🏠 Run Locally"/>
+        {/* Live server toggle — only in simulator */}
+        {mainView==="simulator"&&(
+          <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:6}}>
+            <button onClick={()=>setLiveMode(m=>!m)}
+              style={{background:liveMode?"#98c379":T.bgRaised,color:liveMode?"#000":T.textDim,
+                border:`1px solid ${liveMode?"#98c379":T.border}`,borderRadius:5,padding:"2px 8px",fontSize:11,cursor:"pointer"}}>
+              {liveMode?"🟢 Live":"⚫ Mock"}
+            </button>
+            {liveMode&&(
+              <>
+                <input value={liveUrl} onChange={e=>setLiveUrl(e.target.value)}
+                  style={{background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:4,padding:"2px 6px",fontSize:11,color:T.text,width:160}}/>
+                <button onClick={pingServer}
+                  style={{background:liveStatus==="ok"?"#98c379":liveStatus==="cors"?"#e5c07b":liveStatus==="err"?"#e06c75":T.bgRaised,
+                    color:liveStatus?"#000":T.textDim,border:"none",borderRadius:4,padding:"2px 7px",fontSize:11,cursor:"pointer"}}>
+                  {liveStatus==="ok"?"✅ Connected":liveStatus==="cors"?"⚠️ CORS":liveStatus==="err"?"❌ No server":"Ping"}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+        {mainView==="tutorial"&&<span style={{marginLeft:"auto",fontSize:11,color:T.textDim}}>Step {tutStep+1}/{TUT_STEPS.length}</span>}
+        {mainView==="local"&&doneCount>0&&<span style={{marginLeft:"auto",fontSize:11,color:"#98c379"}}>{doneCount}/{steps.length} done</span>}
+      </div>
+
+      {/* ── SIMULATOR ── */}
+      {mainView==="simulator"&&(
+        <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+          {/* left: endpoints */}
+          <div style={{width:260,borderRight:`1px solid ${T.border}`,display:"flex",flexDirection:"column",flexShrink:0}}>
+            <div style={{padding:"8px 8px 0",flexShrink:0}}>
+              <div style={{fontSize:11,color:T.textDim,marginBottom:6,paddingLeft:2}}>ENDPOINTS</div>
+              {simTabs.map(t=>(
+                <button key={t} onClick={()=>setSimTab(t)}
+                  style={{width:"100%",textAlign:"left",background:simTab===t?T.bgRaised:"transparent",
+                    border:"none",borderLeft:`3px solid ${simTab===t?tabColor(t):"transparent"}`,
+                    color:simTab===t?T.text:T.textDim,padding:"6px 10px",fontSize:12,cursor:"pointer",marginBottom:2,borderRadius:"0 4px 4px 0"}}>
+                  <span style={{color:tabColor(t),marginRight:6,fontWeight:"bold"}}>{t.split(" ")[0]}</span>{t.split(" ")[1]}
+                </button>
+              ))}
+            </div>
+            <div style={{padding:"12px 10px",flex:1,overflowY:"auto"}}>
+              {liveMode&&(
+                <div style={{background:D?"#0d1f0d":"#f0fdf4",border:"1px solid #98c37944",borderRadius:5,padding:"7px 10px",marginBottom:10,fontSize:11,color:"#98c379",lineHeight:1.5}}>
+                  🟢 <strong>Live mode</strong> — requests go to {liveUrl}
+                </div>
+              )}
+              {liveMode&&liveStatus==="cors"&&(
+                <div style={{background:D?"#2a1f00":"#fffbeb",border:"1px solid #e5c07b",borderRadius:6,padding:"10px",marginBottom:10,fontSize:11,lineHeight:1.6}}>
+                  <div style={{color:"#e5c07b",fontWeight:"bold",marginBottom:4}}>⚠️ Server running but CORS is blocked</div>
+                  <div style={{color:T.textDim,marginBottom:6}}>Your browser blocks requests from <code style={{background:T.bgMid,padding:"1px 4px",borderRadius:2}}>file://</code> to localhost unless FastAPI allows it.</div>
+                  <div style={{color:T.text,marginBottom:4}}>Add this to the top of <code style={{color:"#98c379"}}>main.py</code>:</div>
+                  <pre style={{margin:"0 0 6px",background:T.bgMid,padding:"6px 8px",borderRadius:4,fontSize:11,color:"#98c379",overflowX:"auto",whiteSpace:"pre"}}>{"from fastapi.middleware.cors import CORSMiddleware\n\napp.add_middleware(\n  CORSMiddleware,\n  allow_origins=['*'],\n  allow_methods=['*'],\n  allow_headers=['*'],\n)"}</pre>
+                  <div style={{color:T.textDim}}>Then restart uvicorn and ping again.</div>
+                </div>
+              )}
+              {liveMode&&liveStatus==="err"&&(
+                <div style={{background:D?"#2a0d0d":"#fff5f5",border:"1px solid #e06c75",borderRadius:6,padding:"10px",marginBottom:10,fontSize:11,lineHeight:1.6}}>
+                  <div style={{color:"#e06c75",fontWeight:"bold",marginBottom:4}}>❌ Server not found</div>
+                  <div style={{color:T.textDim,marginBottom:4}}>Make sure you ran:</div>
+                  <pre style={{margin:"0 0 6px",background:T.bgMid,padding:"6px 8px",borderRadius:4,fontSize:11,color:"#98c379"}}>uvicorn main:app --reload</pre>
+                  <div style={{color:T.textDim}}>And that the URL matches (default: <code>http://localhost:8000</code>)</div>
+                </div>
+              )}
+              {simTab==="GET /"&&(
+                <div>
+                  <div style={{fontSize:11,color:T.textDim,marginBottom:8}}>Returns API status and book count.</div>
+                  <div style={{background:T.bgMid,borderRadius:5,padding:"6px 8px",fontSize:11,color:T.textDim,marginBottom:10,fontFamily:"monospace"}}>GET {liveMode?liveUrl:""}/</div>
+                  <button onClick={doGetRoot} style={{width:"100%",background:"#61afef",color:"#000",border:"none",borderRadius:5,padding:"7px",fontSize:12,fontWeight:"bold",cursor:"pointer"}}>▶ Send Request</button>
+                </div>
+              )}
+              {simTab==="GET /books"&&(
+                <div>
+                  <div style={{fontSize:11,color:T.textDim,marginBottom:8}}>Get all books or filter by category.</div>
+                  <div style={{background:T.bgMid,borderRadius:5,padding:"6px 8px",fontSize:11,color:T.textDim,marginBottom:10,fontFamily:"monospace"}}>GET /books{filter?"?category="+filter:""}</div>
+                  <div style={{marginBottom:8}}>
+                    <div style={{fontSize:11,color:T.textDim,marginBottom:3}}>?category <span style={{color:T.textFnt}}>(optional)</span></div>
+                    <input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="e.g. tech, sci-fi"
+                      style={{width:"100%",background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:4,padding:"5px 8px",fontSize:12,color:T.text}}/>
+                  </div>
+                  <button onClick={doGet} style={{width:"100%",background:"#61afef",color:"#000",border:"none",borderRadius:5,padding:"7px",fontSize:12,fontWeight:"bold",cursor:"pointer"}}>▶ Send Request</button>
+                </div>
+              )}
+              {simTab==="POST /books"&&(
+                <div>
+                  <div style={{fontSize:11,color:T.textDim,marginBottom:8}}>Create a new book. All fields required.</div>
+                  <div style={{background:T.bgMid,borderRadius:5,padding:"6px 8px",fontSize:11,color:T.textDim,marginBottom:10,fontFamily:"monospace"}}>POST /books</div>
+                  <div style={{marginBottom:7}}>
+                    <div style={{fontSize:11,color:T.textDim,marginBottom:3}}>title <span style={{color:"#e06c75"}}>*required</span></div>
+                    <input ref={postTitleRef} defaultValue="" placeholder="e.g. Clean Code 2"
+                      style={{width:"100%",background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:4,padding:"5px 8px",fontSize:12,color:T.text}}/>
+                  </div>
+                  <div style={{marginBottom:7}}>
+                    <div style={{fontSize:11,color:T.textDim,marginBottom:3}}>price <span style={{color:"#e06c75"}}>*required</span></div>
+                    <input ref={postPriceRef} defaultValue="" placeholder="e.g. 24.99"
+                      style={{width:"100%",background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:4,padding:"5px 8px",fontSize:12,color:T.text}}/>
+                  </div>
+                  <div style={{marginBottom:7}}>
+                    <div style={{fontSize:11,color:T.textDim,marginBottom:3}}>category <span style={{color:"#e06c75"}}>*required</span></div>
+                    <input ref={postCategoryRef} defaultValue="" placeholder="e.g. tech"
+                      style={{width:"100%",background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:4,padding:"5px 8px",fontSize:12,color:T.text}}/>
+                  </div>
+
+                  <button onClick={doPost} style={{width:"100%",background:"#98c379",color:"#000",border:"none",borderRadius:5,padding:"7px",fontSize:12,fontWeight:"bold",cursor:"pointer"}}>▶ Send Request</button>
+                </div>
+              )}
+              {simTab==="DELETE /books/{id}"&&(
+                <div>
+                  <div style={{fontSize:11,color:T.textDim,marginBottom:8}}>Delete a book by ID. Returns 404 if not found.</div>
+                  <div style={{background:T.bgMid,borderRadius:5,padding:"6px 8px",fontSize:11,color:T.textDim,marginBottom:10,fontFamily:"monospace"}}>DELETE /books/{deleteId||"{id}"}</div>
+                  <div style={{marginBottom:8}}>
+                    <div style={{fontSize:11,color:T.textDim,marginBottom:3}}>book_id <span style={{color:"#e06c75"}}>*required</span></div>
+                    <input value={deleteId} onChange={e=>setDeleteId(e.target.value)} placeholder="e.g. 1"
+                      style={{width:"100%",background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:4,padding:"5px 8px",fontSize:12,color:T.text}}/>
+                  </div>
+                  {!liveMode&&<div style={{fontSize:11,color:T.textDim,marginBottom:8}}>Available IDs: {db.map(b=>b.id).join(", ")||"none"}</div>}
+                  <button onClick={doDelete} style={{width:"100%",background:"#e06c75",color:"#000",border:"none",borderRadius:5,padding:"7px",fontSize:12,fontWeight:"bold",cursor:"pointer"}}>▶ Send Request</button>
+                </div>
+              )}
+              {!liveMode&&(
+                <div style={{marginTop:14,borderTop:`1px solid ${T.border}`,paddingTop:10}}>
+                  <div style={{fontSize:11,color:T.textDim,marginBottom:6}}>📦 LIVE DATABASE ({db.length} books)</div>
+                  {db.map(b=>(
+                    <div key={b.id} style={{background:T.bgMid,borderRadius:4,padding:"5px 7px",marginBottom:4,fontSize:11}}>
+                      <span style={{color:"#e5c07b"}}>#{b.id}</span>
+                      <span style={{color:T.text,marginLeft:6}}>{b.title}</span>
+                      <span style={{color:"#98c379",marginLeft:6}}>${b.price}</span>
+                      <span style={{color:T.textDim,marginLeft:6}}>[{b.category}]</span>
+                    </div>
+                  ))}
+                  <button onClick={()=>{setDb(initDb());setLog([]);}}
+                    style={{marginTop:4,background:"none",border:`1px solid ${T.border}`,borderRadius:4,color:T.textDim,padding:"3px 8px",fontSize:11,cursor:"pointer",width:"100%"}}>
+                    ↺ Reset Database
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* right: log */}
+          <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+            <div style={{padding:"6px 12px",borderBottom:`1px solid ${T.border}`,fontSize:11,color:T.textDim,flexShrink:0,display:"flex",justifyContent:"space-between"}}>
+              <span>⚡ Response Log {liveMode&&<span style={{color:"#98c379",marginLeft:4}}>— Live</span>}</span>
+              {log.length>0&&<button onClick={()=>setLog([])} style={{background:"none",border:"none",color:T.textFnt,fontSize:11,cursor:"pointer"}}>Clear</button>}
+            </div>
+            <div style={{flex:1,overflowY:"auto",padding:8}}>
+              {log.length===0&&(
+                <div style={{textAlign:"center",color:T.textFnt,fontSize:12,marginTop:40}}>
+                  <div style={{fontSize:32,marginBottom:8}}>🚀</div>
+                  <div>Select an endpoint and hit Send Request</div>
+                  {liveMode&&<div style={{marginTop:8,fontSize:11,color:"#98c379"}}>Sending real requests to {liveUrl}</div>}
+                </div>
+              )}
+              {log.map(e=><LogCard key={e.id} entry={e}/>)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TUTORIAL ── */}
+      {mainView==="tutorial"&&(
+        <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+          {/* left: code viewer */}
+          <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",borderRight:`1px solid ${T.border}`}}>
+            <div style={{padding:"8px 12px",borderBottom:`1px solid ${T.border}`,flexShrink:0,background:T.bgDeep}}>
+              <div style={{fontSize:13,fontWeight:"bold",color:"#fb923c",marginBottom:3}}>{TUT_STEPS[tutStep].title}</div>
+              <div style={{fontSize:11,color:T.textDim,lineHeight:1.6}}>{TUT_STEPS[tutStep].concept}</div>
+            </div>
+            {/* step pills */}
+            <div style={{padding:"6px 10px",borderBottom:`1px solid ${T.border}`,flexShrink:0,display:"flex",gap:4}}>
+              {TUT_STEPS.map((_,i)=>(
+                <button key={i} onClick={()=>setTutStep(i)}
+                  style={{background:tutStep===i?"#fb923c":T.bgRaised,color:tutStep===i?"#000":T.textDim,
+                    border:"none",borderRadius:4,padding:"2px 8px",fontSize:11,cursor:"pointer",fontWeight:tutStep===i?"bold":"normal"}}>
+                  {i+1}
+                </button>
+              ))}
+            </div>
+            {/* CodeMirror mount point — always in DOM when tutorial view is active */}
+            <div ref={tutDivRef} style={{flex:1,overflow:"hidden",minHeight:0}}/>
+            {/* hint */}
+            <div style={{padding:"6px 12px",borderTop:`1px solid ${T.border}`,flexShrink:0,display:"flex",alignItems:"center",gap:8,background:D?"#1a2030":"#f0f4ff"}}>
+              <span style={{fontSize:16}}>💡</span>
+              <span style={{fontSize:11,color:T.textDim,flex:1,lineHeight:1.5}}>{TUT_STEPS[tutStep].hint}</span>
+            </div>
+          </div>
+          {/* right: request + log */}
+          <div style={{width:280,display:"flex",flexDirection:"column",flexShrink:0,overflow:"hidden"}}>
+            <div style={{padding:"8px 12px",borderBottom:`1px solid ${T.border}`,flexShrink:0}}>
+              <div style={{fontSize:11,color:T.textDim,marginBottom:6}}>SEND REQUEST</div>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+                <span style={{color:methodColor(TUT_STEPS[tutStep].action.method),fontWeight:"bold",fontSize:12}}>{TUT_STEPS[tutStep].action.method}</span>
+                <span style={{fontFamily:"monospace",fontSize:11,color:T.text,background:T.bgMid,padding:"2px 7px",borderRadius:4}}>{TUT_STEPS[tutStep].action.url}</span>
+              </div>
+              {(TUT_STEPS[tutStep].inputs||[]).map(inp=>(
+                <div key={inp.key} style={{marginBottom:7}}>
+                  <div style={{fontSize:11,color:T.textDim,marginBottom:3}}>{inp.key}</div>
+                  <input value={tutInput[inp.key]||""} onChange={e=>{const v=e.target.value;setTutInput(x=>({...x,[inp.key]:v}))}} placeholder={inp.placeholder}
+                    style={{width:"100%",background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:4,padding:"5px 8px",fontSize:12,color:T.text}}/>
+                </div>
+              ))}
+              <button onClick={runTutStep}
+                style={{width:"100%",background:"#fb923c",color:"#000",border:"none",borderRadius:5,padding:"7px",fontSize:12,fontWeight:"bold",cursor:"pointer",marginTop:4}}>
+                ▶ Run — {TUT_STEPS[tutStep].action.label}
+              </button>
+            </div>
+            <div style={{flex:1,overflowY:"auto",padding:8}}>
+              {tutLog.length===0&&(
+                <div style={{textAlign:"center",color:T.textFnt,fontSize:11,marginTop:30}}>
+                  <div style={{fontSize:28,marginBottom:6}}>👆</div>
+                  Hit Run to see the response
+                </div>
+              )}
+              {tutLog.map(e=><LogCard key={e.id} entry={e}/>)}
+            </div>
+            <div style={{padding:"8px 10px",borderTop:`1px solid ${T.border}`,display:"flex",gap:6,flexShrink:0}}>
+              <button onClick={()=>setTutStep(s=>Math.max(0,s-1))} disabled={tutStep===0}
+                style={{flex:1,background:tutStep===0?T.bgRaised:T.bgMid,color:tutStep===0?T.textFnt:T.textDim,
+                  border:`1px solid ${T.border}`,borderRadius:5,padding:"5px",fontSize:12,cursor:tutStep===0?"default":"pointer"}}>
+                ← Prev
+              </button>
+              <button onClick={()=>setTutStep(s=>Math.min(TUT_STEPS.length-1,s+1))} disabled={tutStep===TUT_STEPS.length-1}
+                style={{flex:1,background:tutStep===TUT_STEPS.length-1?"#98c37966":"#fb923c",
+                  color:tutStep===TUT_STEPS.length-1?T.textFnt:"#000",
+                  border:"none",borderRadius:5,padding:"5px",fontSize:12,fontWeight:"bold",cursor:tutStep===TUT_STEPS.length-1?"default":"pointer"}}>
+                {tutStep===TUT_STEPS.length-1?"✅ Done":"Next →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── RUN LOCALLY ── */}
+      {mainView==="local"&&(
+        <div style={{flex:1,overflowY:"auto",padding:16}}>
+          <div style={{maxWidth:600,margin:"0 auto"}}>
+            <div style={{fontSize:14,fontWeight:"bold",color:T.text,marginBottom:4}}>🏠 Run FastAPI on Your Machine</div>
+            <div style={{fontSize:12,color:T.textDim,marginBottom:16,lineHeight:1.6}}>
+              <code style={{background:T.bgMid,padding:"1px 5px",borderRadius:3,color:"#98c379",fontSize:11}}>main.py</code> is already in the GitHub repo — just clone and run.
+              Once the server is up, switch to <strong>🖥 Simulator</strong> and toggle <strong>🟢 Live</strong> to send real HTTP requests.
+            </div>
+            {steps.map((step,i)=>{
+              const done=checks[step.key];
+              return (
+                <div key={step.key} style={{display:"flex",gap:12,marginBottom:14}}>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
+                    <button onClick={()=>toggleCheck(step.key)}
+                      style={{width:26,height:26,borderRadius:"50%",border:`2px solid ${done?"#98c379":"#fb923c"}`,
+                        background:done?"#98c379":"transparent",color:done?"#000":"#fb923c",
+                        fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:"bold"}}>
+                      {done?"✓":step.num}
+                    </button>
+                    {i<steps.length-1&&<div style={{width:2,flex:1,background:done?"#98c37944":T.border,marginTop:4}}/>}
+                  </div>
+                  <div style={{flex:1,paddingBottom:4}}>
+                    <div style={{fontSize:13,fontWeight:"bold",color:done?"#98c379":T.text,marginBottom:4}}>{step.title}</div>
+                    <div style={{fontSize:12,color:T.textDim,marginBottom:step.cmd||step.links.length?8:0,lineHeight:1.5}}>{step.body}</div>
+                    {step.note&&(
+                      <div style={{fontSize:11,color:"#98c379",background:D?"#0d1f0d":"#f0fdf4",border:"1px solid #98c37933",borderRadius:4,padding:"5px 8px",marginBottom:8}}>
+                        ✅ {step.note}
+                      </div>
+                    )}
+                    {step.cmd&&(
+                      <div style={{display:"flex",alignItems:"center",gap:6,background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:6,padding:"6px 10px",marginBottom:step.cdCmd?6:0}}>
+                        <code style={{flex:1,fontSize:12,color:"#98c379",fontFamily:"monospace"}}>{step.cmd}</code>
+                        <button onClick={()=>copy2(step.cmd,step.key)}
+                          style={{background:copied2===step.key?"#98c379":T.bgRaised,color:copied2===step.key?"#000":T.textDim,
+                            border:"none",borderRadius:4,padding:"2px 7px",fontSize:11,cursor:"pointer",flexShrink:0}}>
+                          {copied2===step.key?"✅":"📋"}
+                        </button>
+                      </div>
+                    )}
+                    {step.cdCmd&&(
+                      <div style={{display:"flex",alignItems:"center",gap:6,background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:6,padding:"6px 10px"}}>
+                        <code style={{flex:1,fontSize:12,color:"#e5c07b",fontFamily:"monospace"}}>{step.cdCmd}</code>
+                        <button onClick={()=>copy2(step.cdCmd,step.key+"cd")}
+                          style={{background:copied2===step.key+"cd"?"#98c379":T.bgRaised,color:copied2===step.key+"cd"?"#000":T.textDim,
+                            border:"none",borderRadius:4,padding:"2px 7px",fontSize:11,cursor:"pointer",flexShrink:0}}>
+                          {copied2===step.key+"cd"?"✅":"📋"}
+                        </button>
+                      </div>
+                    )}
+                    {step.links.length>0&&(
+                      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:step.cmd?8:0}}>
+                        {step.links.map(l=>(
+                          <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer"
+                            style={{fontSize:12,color:"#61afef",textDecoration:"none",border:"1px solid #61afef44",borderRadius:5,padding:"4px 10px",background:T.bgMid}}>
+                            {l.label}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {doneCount===steps.length&&(
+              <div style={{background:"#98c37922",border:"1px solid #98c379",borderRadius:8,padding:"12px 16px",marginTop:8}}>
+                <div style={{fontSize:13,color:"#98c379",fontWeight:"bold",marginBottom:4}}>🎉 Server is running!</div>
+                <div style={{fontSize:12,color:T.textDim,marginBottom:10}}>Switch to the Simulator and toggle Live mode to send real HTTP requests to your server.</div>
+                <button onClick={()=>{setMainView("simulator");setLiveMode(true);setLiveStatus(null);}}
+                  style={{background:"#98c379",color:"#000",border:"none",borderRadius:6,padding:"7px 14px",fontSize:12,fontWeight:"bold",cursor:"pointer"}}>
+                  → Open Simulator in Live mode
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function App() {
   /* ── THEME ─────────────────────────────────────────── */
   const [theme, setThemeRaw] = useState(() => localStorage.getItem("bc_theme") || "dark");
   const setTheme = (t) => { localStorage.setItem("bc_theme", t); setThemeRaw(t); document.body.className = t; };
-  useEffect(() => { document.body.className = theme; }, [theme]);
+  useEffect(() => {
+    document.body.className = theme;
+    // Hide loading screen once React has mounted
+    const ls = document.getElementById('loading-screen');
+    if (ls) ls.style.display = 'none';
+  }, [theme]);
   const D = theme === "dark";
   const T = {
     bg:       D ? "#1e1e2e" : "#f8fafc",
@@ -490,8 +1130,38 @@ function App() {
   /* ── REFS ───────────────────────────────────────────── */
   const pyodideRef  = useRef(null);
   const chatEndRef  = useRef(null);
-  const cmRef       = useRef(null);   // CodeMirror instance
-  const cmElRef     = useRef(null);   // mount element
+  const cmRef       = useRef(null);
+  const cmElRef     = useRef(null);
+  const pendingCode = useRef(null);
+
+  const initCM = useCallback((el) => {
+    if (!el) {
+      // Editor div unmounted — just clear the ref, don't call toTextArea()
+      cmRef.current = null;
+      cmElRef.current = null;
+      return;
+    }
+    if (cmRef.current) return; // already initialized
+    if (!window.CodeMirror) return; // CDN not ready yet
+    cmElRef.current = el;
+    cmRef.current = window.CodeMirror(el, {
+      value: "",
+      mode: "python",
+      theme: localStorage.getItem("bc_theme") === "light" ? "eclipse" : "dracula",
+      lineNumbers: true,
+      matchBrackets: true,
+      autoCloseBrackets: true,
+      indentUnit: 4,
+      tabSize: 4,
+      extraKeys: { Tab: cm => cm.replaceSelection("    ") },
+    });
+    cmRef.current.on("change", cm => setCode(cm.getValue()));
+    // Push any code that was queued before CM mounted
+    if (pendingCode.current !== null) {
+      cmRef.current.setValue(pendingCode.current);
+      pendingCode.current = null;
+    }
+  }, []); // stable ref — never recreated
   const dragVRef    = useRef(null);
   const dragHRef    = useRef(null);
 
@@ -517,30 +1187,9 @@ function App() {
     document.head.appendChild(s);
   }, []);
 
-  /* ── CODEMIRROR INIT ────────────────────────────────── */
-  useEffect(() => {
-    if (!cmElRef.current || cmRef.current) return;
-    cmRef.current = window.CodeMirror(cmElRef.current, {
-      value: code,
-      mode: "python",
-      theme: D ? "dracula" : "eclipse",
-      lineNumbers: true,
-      matchBrackets: true,
-      autoCloseBrackets: true,
-      indentUnit: 4,
-      tabSize: 4,
-      extraKeys: { Tab: cm => cm.replaceSelection("    ") },
-    });
-    cmRef.current.on("change", cm => setCode(cm.getValue()));
-  });
-
   useEffect(() => {
     if (cmRef.current) cmRef.current.setOption("theme", D ? "dracula" : "eclipse");
-  }, [theme]);
-
-  useEffect(() => {
-    if (cmRef.current && cmRef.current.getValue() !== code) cmRef.current.setValue(code);
-  }, [code]);
+  }, [theme, cmRef.current]); // re-run when theme changes OR when CM first mounts
 
   /* ── RESTORE SAVED LESSON ON FIRST LOAD ────────────── */
   useEffect(() => {
@@ -555,104 +1204,216 @@ function App() {
   const AI_LESSONS = ["6a","7a","7b","7c"];
 
   const adaptCodeForProvider = (raw) => {
-    // ── Anthropic key: just inject real key + cheaper model ──
+    const key = anthropicKey || openaiKey || geminiKey;
+    if (!key) return raw;
+
+    const provider = anthropicKey ? "Anthropic" : openaiKey ? "OpenAI" : "Gemini";
+    const is6a = raw.includes("call_ai(system_prompt, user_message)");
+
+    // Use synchronous XMLHttpRequest via js bridge — works in Pyodide main thread
+    let impl = "";
     if (anthropicKey) {
-      return raw
-        .replace(/^# pip install anthropic\n?/m, "# ✅ Using your Anthropic key from AI Tutor settings\n")
-        .replace(/api_key\s*=\s*['"]your-key(?:-here)?['"]/g, `api_key="${anthropicKey}"`)
-        .replace(/model\s*=\s*['"]claude-opus-4-5['"]/g, 'model="claude-haiku-4-5-20251001"');
+      const k = anthropicKey;
+      if (is6a) {
+        impl = "def call_ai(system_prompt, user_message):\n" +
+          "    import json\n" +
+          "    from js import XMLHttpRequest\n" +
+          "    body = json.dumps({\"model\":\"claude-haiku-4-5-20251001\",\"max_tokens\":800,\n" +
+          "        \"system\":system_prompt,\"messages\":[{\"role\":\"user\",\"content\":user_message}]})\n" +
+          "    xhr = XMLHttpRequest.new()\n" +
+          "    xhr.open(\"POST\", \"https://api.anthropic.com/v1/messages\", False)\n" +
+          "    xhr.setRequestHeader(\"Content-Type\", \"application/json\")\n" +
+          "    xhr.setRequestHeader(\"x-api-key\", \"" + k + "\")\n" +
+          "    xhr.setRequestHeader(\"anthropic-version\", \"2023-06-01\")\n" +
+          "    xhr.setRequestHeader(\"anthropic-dangerous-direct-browser-access\", \"true\")\n" +
+          "    xhr.send(body)\n" +
+          "    if xhr.status == 0: raise Exception('Network error — CORS blocked or no internet. Try a different browser or server.')\n" +
+          "    resp = json.loads(xhr.responseText)\n" +
+          "    if 'error' in resp: raise Exception(resp['error'].get('message','Anthropic API error'))\n" +
+          "    return resp[\"content\"][0][\"text\"]";
+      } else {
+        impl = "def call_ai(prompt):\n" +
+          "    import json\n" +
+          "    from js import XMLHttpRequest\n" +
+          "    body = json.dumps({\"model\":\"claude-haiku-4-5-20251001\",\"max_tokens\":800,\n" +
+          "        \"messages\":[{\"role\":\"user\",\"content\":prompt}]})\n" +
+          "    xhr = XMLHttpRequest.new()\n" +
+          "    xhr.open(\"POST\", \"https://api.anthropic.com/v1/messages\", False)\n" +
+          "    xhr.setRequestHeader(\"Content-Type\", \"application/json\")\n" +
+          "    xhr.setRequestHeader(\"x-api-key\", \"" + k + "\")\n" +
+          "    xhr.setRequestHeader(\"anthropic-version\", \"2023-06-01\")\n" +
+          "    xhr.setRequestHeader(\"anthropic-dangerous-direct-browser-access\", \"true\")\n" +
+          "    xhr.send(body)\n" +
+          "    if xhr.status == 0: raise Exception('Network error — CORS blocked or no internet. Try a different browser or server.')\n" +
+          "    resp = json.loads(xhr.responseText)\n" +
+          "    if 'error' in resp: raise Exception(resp['error'].get('message','Anthropic API error'))\n" +
+          "    return resp[\"content\"][0][\"text\"]";
+      }
+    } else if (openaiKey) {
+      const k = openaiKey;
+      if (is6a) {
+        impl = "def call_ai(system_prompt, user_message):\n" +
+          "    import json\n" +
+          "    from js import XMLHttpRequest\n" +
+          "    body = json.dumps({\"model\":\"gpt-4o-mini\",\"max_tokens\":800,\n" +
+          "        \"messages\":[{\"role\":\"system\",\"content\":system_prompt},{\"role\":\"user\",\"content\":user_message}]})\n" +
+          "    xhr = XMLHttpRequest.new()\n" +
+          "    xhr.open(\"POST\", \"https://api.openai.com/v1/chat/completions\", False)\n" +
+          "    xhr.setRequestHeader(\"Content-Type\", \"application/json\")\n" +
+          "    xhr.setRequestHeader(\"Authorization\", \"Bearer " + k + "\")\n" +
+          "    xhr.send(body)\n" +
+          "    if xhr.status == 0: raise Exception('Network error — CORS blocked or no internet. Try a different browser or server.')\n" +
+          "    resp = json.loads(xhr.responseText)\n" +
+          "    if 'error' in resp: raise Exception(resp['error'].get('message','OpenAI API error'))\n" +
+          "    return resp[\"choices\"][0][\"message\"][\"content\"]";
+      } else {
+        impl = "def call_ai(prompt):\n" +
+          "    import json\n" +
+          "    from js import XMLHttpRequest\n" +
+          "    body = json.dumps({\"model\":\"gpt-4o-mini\",\"max_tokens\":800,\n" +
+          "        \"messages\":[{\"role\":\"user\",\"content\":prompt}]})\n" +
+          "    xhr = XMLHttpRequest.new()\n" +
+          "    xhr.open(\"POST\", \"https://api.openai.com/v1/chat/completions\", False)\n" +
+          "    xhr.setRequestHeader(\"Content-Type\", \"application/json\")\n" +
+          "    xhr.setRequestHeader(\"Authorization\", \"Bearer " + k + "\")\n" +
+          "    xhr.send(body)\n" +
+          "    if xhr.status == 0: raise Exception('Network error — CORS blocked or no internet. Try a different browser or server.')\n" +
+          "    resp = json.loads(xhr.responseText)\n" +
+          "    if 'error' in resp: raise Exception(resp['error'].get('message','OpenAI API error'))\n" +
+          "    return resp[\"choices\"][0][\"message\"][\"content\"]";
+      }
+    } else if (geminiKey) {
+      const k = geminiKey;
+      if (is6a) {
+        impl = "def call_ai(system_prompt, user_message):\n" +
+          "    import json\n" +
+          "    from js import XMLHttpRequest\n" +
+          "    full = system_prompt + \"\\n\\n\" + user_message\n" +
+          "    body = json.dumps({\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":full}]}],\n" +
+          "        \"generationConfig\":{\"maxOutputTokens\":800}})\n" +
+          "    url = \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + k + "\"\n" +
+          "    xhr = XMLHttpRequest.new()\n" +
+          "    xhr.open(\"POST\", url, False)\n" +
+          "    xhr.setRequestHeader(\"Content-Type\", \"application/json\")\n" +
+          "    xhr.send(body)\n" +
+          "    if xhr.status == 0: raise Exception('Network error — CORS blocked or no internet.')\n" +
+          "    resp = json.loads(xhr.responseText)\n" +
+          "    if 'error' in resp: raise Exception(resp['error'].get('message','Gemini API error'))\n" +
+          "    if 'candidates' not in resp: raise Exception('Unexpected response: ' + str(resp)[:120])\n" +
+          "    return resp['candidates'][0]['content']['parts'][0]['text']";
+      } else {
+        impl = "def call_ai(prompt):\n" +
+          "    import json\n" +
+          "    from js import XMLHttpRequest\n" +
+          "    body = json.dumps({\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":prompt}]}],\n" +
+          "        \"generationConfig\":{\"maxOutputTokens\":800}})\n" +
+          "    url = \"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + k + "\"\n" +
+          "    xhr = XMLHttpRequest.new()\n" +
+          "    xhr.open(\"POST\", url, False)\n" +
+          "    xhr.setRequestHeader(\"Content-Type\", \"application/json\")\n" +
+          "    xhr.send(body)\n" +
+          "    if xhr.status == 0: raise Exception('Network error — CORS blocked or no internet.')\n" +
+          "    resp = json.loads(xhr.responseText)\n" +
+          "    if 'error' in resp: raise Exception(resp['error'].get('message','Gemini API error'))\n" +
+          "    if 'candidates' not in resp: raise Exception('Unexpected response: ' + str(resp)[:120])\n" +
+          "    return resp['candidates'][0]['content']['parts'][0]['text']";
+      }
     }
-    // ── OpenAI key: swap SDK + model + response shape ──
-    if (openaiKey) {
-      return raw
-        .replace(/^# pip install anthropic\n?/m, "# ✅ Using your OpenAI key from AI Tutor settings\n")
-        .replace(/^import anthropic(, json)?/m, (_, j) => j ? "import json\nfrom openai import OpenAI" : "from openai import OpenAI")
-        .replace(/anthropic\.Anthropic\(api_key\s*=\s*['"][^'"]*['"]\)/g, `OpenAI(api_key="${openaiKey}")`)
-        .replace(/client\.messages\.create\(/g, "client.chat.completions.create(")
-        .replace(/model\s*=\s*['"]claude-[^'"]+['"]/g, 'model="gpt-4o-mini"')
-        .replace(/,\s*\n(\s*)system\s*=\s*\w+/g, "")
-        .replace(/,\s*system\s*=\s*\w+/g, "")
-        .replace(/\bmessage\.content\[0\]\.text\b/g, "message.choices[0].message.content")
-        .replace(/\bmsg\.content\[0\]\.text\b/g, "msg.choices[0].message.content")
-        .replace(/\bresponse\.content\[0\]\.text\b/g, "response.choices[0].message.content")
-        // tools / agent loop: response.stop_reason → response.choices[0].finish_reason
-        .replace(/response\.stop_reason\s*==\s*['"]end_turn['"]/g, "response.choices[0].finish_reason == 'stop'")
-        .replace(/response\.content\b(?!\[0\]\.text)/g, "response.choices[0].message.tool_calls or []");
-    }
-    // ── Gemini key: use urllib (no pip needed in Pyodide) ──
-    if (geminiKey) {
-      const GEMINI_HELPER = `# ✅ Using your Gemini key from AI Tutor settings
-import json, urllib.request
 
-def _gemini(prompt, system=None):
-    full = (system + "\\n\\n" + prompt) if system else prompt
-    req = urllib.request.Request(
-        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}",
-        data=json.dumps({"contents":[{"role":"user","parts":[{"text":full}]}],
-                         "generationConfig":{"maxOutputTokens":500}}).encode(),
-        headers={"Content-Type":"application/json"}, method="POST")
-    res = json.loads(urllib.request.urlopen(req).read())
-    return res["candidates"][0]["content"]["parts"][0]["text"]
-`;
-      // strip original imports/client lines
-      let adapted = raw
-        .replace(/^# pip install anthropic\n?/m, "")
-        .replace(/^import anthropic.*\n?/m, "")
-        .replace(/^from datetime import datetime\n?/m, "from datetime import datetime\n")
-        .replace(/client\s*=\s*anthropic\.Anthropic\([^)]*\)\n?/g, "")
-        // replace client.messages.create(...) blocks with _gemini() calls
-        .replace(/\w+\s*=\s*client\.messages\.create\(\s*\n?[\s\S]*?messages\s*=\s*\[.*?\]\s*\)\s*/g, (match) => {
-          // extract the variable name on left of =
-          const varName = match.match(/^(\w+)\s*=/)?.[1] || "msg";
-          // extract content/prompt variable (last messages=[{...content: X}])
-          const contentVar = match.match(/['"]content['"]\s*:\s*(\w+)/)?.[1] || "prompt";
-          const systemVar  = match.match(/system\s*=\s*(\w+)/)?.[1];
-          const systemArg  = systemVar ? `, system=${systemVar}` : "";
-          return `${varName}_text = _gemini(${contentVar}${systemArg})\n`;
-        })
-        // replace response object access
-        .replace(/(\w+)\.content\[0\]\.text/g, "$1_text")
-        // agent loop tools not supported in Gemini version — add note
-        .replace(/tools\s*=\s*tools,?\s*/g, "# (tool_use not shown in Gemini version)\n        ")
-        .replace(/response\.stop_reason/g, "'end_turn' #")
-        .replace(/block\.type\s*==\s*['"]tool_use['"]/g, "False  # tool_use N/A");
-
-      return GEMINI_HELPER + "\n" + adapted;
-    }
-    return raw;
+    return raw
+      .replace(/def call_ai\(.*?\):\n    pass  # auto-filled by bootcamp/, impl)
+      .replace("# ✅ Your API key is injected automatically from AI Tutor settings",
+               "# ✅ Using your " + provider + " key — via XMLHttpRequest (browser-safe sync HTTP)");
   };
 
   const loadLessonCode = (lesson) => {
     let c = lesson.lines.filter(l=>l.code!==null).map(l=>l.code).join("\n").trim();
     if (AI_LESSONS.includes(lesson.id)) c = adaptCodeForProvider(c);
     setCode(c);
-    if (cmRef.current) cmRef.current.setValue(c);
     setOutput("");
+    if (cmRef.current) {
+      cmRef.current.setValue(c);
+    } else {
+      pendingCode.current = c;
+    }
   };
+
+  const [pipStatus, setPipStatus] = useState(null); // {pkg, status: 'installing'|'done'|'error', msg}
 
   const runCode = async () => {
     const src = cmRef.current ? cmRef.current.getValue() : code;
     if (!pyodideRef.current || !src.trim()) return;
-    setRunning(true); setOutput("");
+
+    // ── Detect pip install lines ──────────────────────────
+    const pipLines = src.split("\n").filter(l => /^#?\s*pip install\s+/i.test(l.trim()));
+    const packages = pipLines.flatMap(l =>
+      l.replace(/^#?\s*pip install\s+/i, "").trim().split(/\s+/)
+    ).filter(Boolean);
+
+    if (packages.length > 0) {
+      for (const pkg of packages) {
+        setPipStatus({pkg, status:"installing"});
+        setOutput("📦 Installing " + pkg + " via micropip...");
+        try {
+          await pyodideRef.current.runPythonAsync("import micropip; await micropip.install('" + pkg + "')");
+          setPipStatus({pkg, status:"done"});
+          setOutput("✅ " + pkg + " installed! Running your code...\n");
+        } catch(e) {
+          setPipStatus({pkg, status:"error", msg: e.message});
+          setOutput(
+            "❌ \"" + pkg + "\" can't be installed in the browser.\n\n" +
+            "This library requires running Python on your computer instead.\n" +
+            "Here's exactly what to do — follow each step:\n\n" +
+            "── STEP 1: Install Python ───────────────────────\n" +
+            "  Go to: https://python.org/downloads\n" +
+            "  Click the big yellow Download button and install it.\n" +
+            "  ✅ Check 'Add Python to PATH' during install (Windows).\n\n" +
+            "── STEP 2: Install the missing library ──────────\n" +
+            "  Open Terminal (Mac) or Command Prompt (Windows).\n" +
+            "  Type this and press Enter:\n\n" +
+            "      pip install " + pkg + "\n\n" +
+            "── STEP 3: Save your code to a file ─────────────\n" +
+            "  Open a plain text editor (Notepad on Windows,\n" +
+            "  TextEdit on Mac — set to plain text mode).\n" +
+            "  Copy all the code from the editor above.\n" +
+            "  Paste it in and save the file as:  lesson.py\n" +
+            "  (Make sure it ends in .py, not .py.txt)\n\n" +
+            "── STEP 4: Run your code ─────────────────────────\n" +
+            "  In Terminal / Command Prompt, type:\n\n" +
+            "      python lesson.py\n\n" +
+            "  and press Enter. You should see the output!\n\n" +
+            "💡 Ask the AI Tutor 💬 if you get stuck on any step."
+          );
+          setRunning(false);
+          return;
+        }
+      }
+    }
+
+    // ── Run the code (skip comment pip lines) ──────────────
+    setRunning(true);
+    const cleanSrc = src.split("\n").map(l => /^#\s*pip install/i.test(l.trim()) ? "# " + l.trim() : l).join("\n");
+    const pyWrapper = [
+      "import sys",
+      "from io import StringIO",
+      "_buf = StringIO()",
+      "sys.stdout = _buf",
+      "sys.stderr = _buf",
+      "try:",
+      cleanSrc.split("\n").map(l => "    " + l).join("\n"),
+      "except Exception as e:",
+      "    print('\\u274c Error: ' + str(e))",
+      "finally:",
+      "    sys.stdout = sys.__stdout__",
+      "    sys.stderr = sys.__stderr__",
+    ].join("\n");
     try {
-      await pyodideRef.current.runPythonAsync(`
-import sys
-from io import StringIO
-_buf = StringIO()
-sys.stdout = _buf
-sys.stderr = _buf
-try:
-${src.split("\n").map(l=>"    "+l).join("\n")}
-except Exception as e:
-    print(f"❌ Error: {e}")
-finally:
-    sys.stdout = sys.__stdout__
-    sys.stderr = sys.__stderr__
-`);
-      const result = pyodideRef.current.runPython(`_buf.getvalue()`);
+      await pyodideRef.current.runPythonAsync(pyWrapper);
+      const result = pyodideRef.current.runPython("_buf.getvalue()");
       setOutput(result || "✅ Code ran successfully (no output)");
-    } catch(e) { setOutput(`❌ ${e.message}`); }
+    } catch(e) { setOutput("❌ " + e.message); }
     setRunning(false);
+    setPipStatus(null);
   };
 
   const copyCode = (text, id) => {
@@ -661,34 +1422,14 @@ finally:
   };
 
   const saveKeys = () => {
-    const newGemini    = keyInput.gemini.trim()    || geminiKey;
-    const newOpenai    = keyInput.openai.trim()    || openaiKey;
-    const newAnthropic = keyInput.anthropic.trim() || anthropicKey;
-    if (keyInput.gemini.trim())    { localStorage.setItem("gemini_key",    newGemini);    setGeminiKey(newGemini); }
-    if (keyInput.openai.trim())    { localStorage.setItem("openai_key",    newOpenai);    setOpenaiKey(newOpenai); }
-    if (keyInput.anthropic.trim()) { localStorage.setItem("anthropic_key", newAnthropic); setAnthropicKey(newAnthropic); }
+    if (keyInput.gemini.trim())    { localStorage.setItem("gemini_key",    keyInput.gemini.trim());    setGeminiKey(keyInput.gemini.trim()); }
+    if (keyInput.openai.trim())    { localStorage.setItem("openai_key",    keyInput.openai.trim());    setOpenaiKey(keyInput.openai.trim()); }
+    if (keyInput.anthropic.trim()) { localStorage.setItem("anthropic_key", keyInput.anthropic.trim()); setAnthropicKey(keyInput.anthropic.trim()); }
     setKeyInput({gemini:"", anthropic:"", openai:""});
     setShowSettings(false);
     // Re-inject key into editor if currently on an AI lesson
     if (activeLesson && AI_LESSONS.includes(activeLesson.id)) {
-      const raw = activeLesson.lines.filter(l=>l.code!==null).map(l=>l.code).join("\n").trim();
-      // use the newly saved keys directly (state hasn't updated yet)
-      const tempGemini = keyInput.gemini.trim() || geminiKey;
-      const tempOpenai = keyInput.openai.trim() || openaiKey;
-      const tempAnthropic = keyInput.anthropic.trim() || anthropicKey;
-      let adapted = raw;
-      if (tempAnthropic) {
-        adapted = raw
-          .replace(/^# pip install anthropic\n?/m, "# ✅ Using your Anthropic key from AI Tutor settings\n")
-          .replace(/api_key\s*=\s*['"]your-key(?:-here)?['"]/g, `api_key="${tempAnthropic}"`)
-          .replace(/model\s*=\s*['"]claude-opus-4-5['"]/g, 'model="claude-haiku-4-5-20251001"');
-      } else if (tempOpenai) {
-        adapted = adaptCodeForProvider(raw);
-      } else if (tempGemini) {
-        adapted = adaptCodeForProvider(raw);
-      }
-      setCode(adapted);
-      if (cmRef.current) cmRef.current.setValue(adapted);
+      setTimeout(() => loadLessonCode(activeLesson), 50);
     }
   };
 
@@ -722,7 +1463,7 @@ finally:
       const msgs = [...history,{role:"user",text:userMsg}];
       if (geminiKey) {
         const gMsgs = msgs.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.text}]}));
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
           {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system_instruction:{parts:[{text:systemPrompt}]},contents:gMsgs,generationConfig:{maxOutputTokens:400}})});
         const d = await r.json(); if (d.error) throw new Error(d.error.message);
         reply = d?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
@@ -931,7 +1672,8 @@ finally:
                 <div style={{width:1,height:28,background:T.textFnt,borderRadius:1,pointerEvents:"none"}}/>
               </div>
 
-              {/* RIGHT: Editor */}
+              {/* RIGHT: Simulator or Editor */}
+              {activeLesson.isSim ? <FastAPISim T={T} D={D} phase={phase}/> : (
               <div className="editor-pane" style={{width:editorWidth,display:"flex",flexDirection:"column",background:T.codeBg,flexShrink:0,minWidth:180}}>
                 <div style={{padding:"6px 10px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",background:T.bgDeep,flexShrink:0}}>
                   <div style={{fontSize:12,color:T.textDim}}>📝 Editor</div>
@@ -946,7 +1688,7 @@ finally:
                 </div>
 
                 {/* CodeMirror mount point */}
-                <div ref={cmElRef} style={{flex:1,overflow:"hidden",minHeight:0}}/>
+                <div ref={initCM} style={{flex:1,overflow:"hidden",minHeight:0}}/>
 
                 {/* HORIZONTAL DIVIDER */}
                 <div onMouseDown={startHDrag}
@@ -959,7 +1701,9 @@ finally:
                 {/* OUTPUT */}
                 <div style={{height:outputHeight,display:"flex",flexDirection:"column",background:T.bgDeep,flexShrink:0,minHeight:60,position:"relative"}}>
                   <div style={{padding:"5px 10px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
-                    <div style={{fontSize:12,color:T.textDim}}>⚡ Output</div>
+                    <div style={{fontSize:12,color:T.textDim}}>
+                      {pipStatus?.status==="installing" ? "📦 Installing "+pipStatus.pkg+"..." : "⚡ Output"}
+                    </div>
                     <button onClick={()=>setOutput("")} style={{background:"none",border:"none",color:T.textFnt,fontSize:13}}>Clear</button>
                   </div>
                   <div style={{flex:1,overflowY:"auto",padding:"8px 10px"}}>
@@ -980,6 +1724,7 @@ finally:
                   </div>
                 </div>
               </div>
+              )}
             </div>
           )}
 
@@ -1097,7 +1842,7 @@ finally:
             <div style={{fontSize:13,color:T.textMut,marginBottom:18}}>Enter one API key to power the chat tutor. Stored locally — never sent anywhere else.</div>
 
             {[
-              {id:"gemini",    label:"🟢 Google Gemini",    color:"#00D084", badge:"⭐ FREE",         hint:`Go to aistudio.google.com → Get API Key. 30 seconds, no card needed.`,           key:geminiKey,    ph:"Paste Gemini API key"},
+              {id:"gemini",    label:"🟢 Google Gemini",    color:"#00D084", badge:"⭐ FREE",         hint:`Go to aistudio.google.com → Get API Key. Free. Uses gemini-2.5-flash.`,           key:geminiKey,    ph:"Paste Gemini API key"},
               {id:"openai",    label:"🟦 OpenAI",           color:"#74aa9c", badge:"~$0.60/1M tokens", hint:`platform.openai.com → API Keys. Requires ~$5 credit. Uses gpt-4o-mini.`,        key:openaiKey,    ph:"Paste OpenAI API key (sk-...)"},
               {id:"anthropic", label:"🟠 Anthropic (Claude)",color:"#f472b6", badge:"~$0.80/1M tokens", hint:`console.anthropic.com → API Keys. Add $5 credit. Uses Claude Haiku.`,            key:anthropicKey, ph:"Paste Anthropic API key (sk-ant-...)"},
             ].map(p=>(
@@ -1106,7 +1851,7 @@ finally:
                   <div style={{fontSize:13,fontWeight:"bold",color:p.color}}>{p.label}</div>
                   <span style={{fontSize:13,background:`${p.color}22`,color:p.color,padding:"2px 7px",borderRadius:8,border:`1px solid ${p.color}44`}}>{p.badge}</span>
                 </div>
-                <input value={keyInput[p.id]} onChange={e=>setKeyInput(prev=>({...prev,[p.id]:e.target.value}))}
+                <input value={keyInput[p.id]} onChange={e=>{const v=e.target.value;setKeyInput(prev=>({...prev,[p.id]:v}))}}
                   placeholder={p.key?"✅ Saved — paste to update":p.ph}
                   style={{width:"100%",background:T.bgDeep,border:`1px solid ${p.key?`${p.color}66`:T.border}`,borderRadius:6,padding:"7px 10px",fontSize:13,color:T.text,fontFamily:"inherit",marginBottom:5}}/>
                 <div style={{fontSize:12,color:T.textMut,background:T.bgDeep,borderRadius:5,padding:"6px 10px",borderLeft:`2px solid ${p.color}`}}>
