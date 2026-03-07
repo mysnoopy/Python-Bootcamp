@@ -552,8 +552,79 @@ function App() {
   }, []);
 
   /* ── HELPERS ────────────────────────────────────────── */
+  const AI_LESSONS = ["6a","7a","7b","7c"];
+
+  const adaptCodeForProvider = (raw) => {
+    // ── Anthropic key: just inject real key + cheaper model ──
+    if (anthropicKey) {
+      return raw
+        .replace(/^# pip install anthropic\n?/m, "# ✅ Using your Anthropic key from AI Tutor settings\n")
+        .replace(/api_key\s*=\s*['"]your-key(?:-here)?['"]/g, `api_key="${anthropicKey}"`)
+        .replace(/model\s*=\s*['"]claude-opus-4-5['"]/g, 'model="claude-haiku-4-5-20251001"');
+    }
+    // ── OpenAI key: swap SDK + model + response shape ──
+    if (openaiKey) {
+      return raw
+        .replace(/^# pip install anthropic\n?/m, "# ✅ Using your OpenAI key from AI Tutor settings\n")
+        .replace(/^import anthropic(, json)?/m, (_, j) => j ? "import json\nfrom openai import OpenAI" : "from openai import OpenAI")
+        .replace(/anthropic\.Anthropic\(api_key\s*=\s*['"][^'"]*['"]\)/g, `OpenAI(api_key="${openaiKey}")`)
+        .replace(/client\.messages\.create\(/g, "client.chat.completions.create(")
+        .replace(/model\s*=\s*['"]claude-[^'"]+['"]/g, 'model="gpt-4o-mini"')
+        .replace(/,\s*\n(\s*)system\s*=\s*\w+/g, "")
+        .replace(/,\s*system\s*=\s*\w+/g, "")
+        .replace(/\bmessage\.content\[0\]\.text\b/g, "message.choices[0].message.content")
+        .replace(/\bmsg\.content\[0\]\.text\b/g, "msg.choices[0].message.content")
+        .replace(/\bresponse\.content\[0\]\.text\b/g, "response.choices[0].message.content")
+        // tools / agent loop: response.stop_reason → response.choices[0].finish_reason
+        .replace(/response\.stop_reason\s*==\s*['"]end_turn['"]/g, "response.choices[0].finish_reason == 'stop'")
+        .replace(/response\.content\b(?!\[0\]\.text)/g, "response.choices[0].message.tool_calls or []");
+    }
+    // ── Gemini key: use urllib (no pip needed in Pyodide) ──
+    if (geminiKey) {
+      const GEMINI_HELPER = `# ✅ Using your Gemini key from AI Tutor settings
+import json, urllib.request
+
+def _gemini(prompt, system=None):
+    full = (system + "\\n\\n" + prompt) if system else prompt
+    req = urllib.request.Request(
+        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}",
+        data=json.dumps({"contents":[{"role":"user","parts":[{"text":full}]}],
+                         "generationConfig":{"maxOutputTokens":500}}).encode(),
+        headers={"Content-Type":"application/json"}, method="POST")
+    res = json.loads(urllib.request.urlopen(req).read())
+    return res["candidates"][0]["content"]["parts"][0]["text"]
+`;
+      // strip original imports/client lines
+      let adapted = raw
+        .replace(/^# pip install anthropic\n?/m, "")
+        .replace(/^import anthropic.*\n?/m, "")
+        .replace(/^from datetime import datetime\n?/m, "from datetime import datetime\n")
+        .replace(/client\s*=\s*anthropic\.Anthropic\([^)]*\)\n?/g, "")
+        // replace client.messages.create(...) blocks with _gemini() calls
+        .replace(/\w+\s*=\s*client\.messages\.create\(\s*\n?[\s\S]*?messages\s*=\s*\[.*?\]\s*\)\s*/g, (match) => {
+          // extract the variable name on left of =
+          const varName = match.match(/^(\w+)\s*=/)?.[1] || "msg";
+          // extract content/prompt variable (last messages=[{...content: X}])
+          const contentVar = match.match(/['"]content['"]\s*:\s*(\w+)/)?.[1] || "prompt";
+          const systemVar  = match.match(/system\s*=\s*(\w+)/)?.[1];
+          const systemArg  = systemVar ? `, system=${systemVar}` : "";
+          return `${varName}_text = _gemini(${contentVar}${systemArg})\n`;
+        })
+        // replace response object access
+        .replace(/(\w+)\.content\[0\]\.text/g, "$1_text")
+        // agent loop tools not supported in Gemini version — add note
+        .replace(/tools\s*=\s*tools,?\s*/g, "# (tool_use not shown in Gemini version)\n        ")
+        .replace(/response\.stop_reason/g, "'end_turn' #")
+        .replace(/block\.type\s*==\s*['"]tool_use['"]/g, "False  # tool_use N/A");
+
+      return GEMINI_HELPER + "\n" + adapted;
+    }
+    return raw;
+  };
+
   const loadLessonCode = (lesson) => {
-    const c = lesson.lines.filter(l=>l.code!==null).map(l=>l.code).join("\n").trim();
+    let c = lesson.lines.filter(l=>l.code!==null).map(l=>l.code).join("\n").trim();
+    if (AI_LESSONS.includes(lesson.id)) c = adaptCodeForProvider(c);
     setCode(c);
     if (cmRef.current) cmRef.current.setValue(c);
     setOutput("");
@@ -590,11 +661,35 @@ finally:
   };
 
   const saveKeys = () => {
-    if (keyInput.gemini.trim())    { localStorage.setItem("gemini_key",    keyInput.gemini.trim());    setGeminiKey(keyInput.gemini.trim()); }
-    if (keyInput.openai.trim())    { localStorage.setItem("openai_key",    keyInput.openai.trim());    setOpenaiKey(keyInput.openai.trim()); }
-    if (keyInput.anthropic.trim()) { localStorage.setItem("anthropic_key", keyInput.anthropic.trim()); setAnthropicKey(keyInput.anthropic.trim()); }
+    const newGemini    = keyInput.gemini.trim()    || geminiKey;
+    const newOpenai    = keyInput.openai.trim()    || openaiKey;
+    const newAnthropic = keyInput.anthropic.trim() || anthropicKey;
+    if (keyInput.gemini.trim())    { localStorage.setItem("gemini_key",    newGemini);    setGeminiKey(newGemini); }
+    if (keyInput.openai.trim())    { localStorage.setItem("openai_key",    newOpenai);    setOpenaiKey(newOpenai); }
+    if (keyInput.anthropic.trim()) { localStorage.setItem("anthropic_key", newAnthropic); setAnthropicKey(newAnthropic); }
     setKeyInput({gemini:"", anthropic:"", openai:""});
     setShowSettings(false);
+    // Re-inject key into editor if currently on an AI lesson
+    if (activeLesson && AI_LESSONS.includes(activeLesson.id)) {
+      const raw = activeLesson.lines.filter(l=>l.code!==null).map(l=>l.code).join("\n").trim();
+      // use the newly saved keys directly (state hasn't updated yet)
+      const tempGemini = keyInput.gemini.trim() || geminiKey;
+      const tempOpenai = keyInput.openai.trim() || openaiKey;
+      const tempAnthropic = keyInput.anthropic.trim() || anthropicKey;
+      let adapted = raw;
+      if (tempAnthropic) {
+        adapted = raw
+          .replace(/^# pip install anthropic\n?/m, "# ✅ Using your Anthropic key from AI Tutor settings\n")
+          .replace(/api_key\s*=\s*['"]your-key(?:-here)?['"]/g, `api_key="${tempAnthropic}"`)
+          .replace(/model\s*=\s*['"]claude-opus-4-5['"]/g, 'model="claude-haiku-4-5-20251001"');
+      } else if (tempOpenai) {
+        adapted = adaptCodeForProvider(raw);
+      } else if (tempGemini) {
+        adapted = adaptCodeForProvider(raw);
+      }
+      setCode(adapted);
+      if (cmRef.current) cmRef.current.setValue(adapted);
+    }
   };
 
   /* ── DRAG RESIZE ────────────────────────────────────── */
@@ -778,6 +873,31 @@ finally:
                 <div style={{margin:"7px 10px",background:D?"#2d2a1e":"#fffbeb",border:"1px solid #F59E0B44",borderRadius:6,padding:"6px 10px"}}>
                   <div style={{color:"#F59E0B",fontSize:12,lineHeight:1.6}}>{activeLesson.memTrick}</div>
                 </div>
+
+                {/* AI lesson nudge — shown only if no key set */}
+                {AI_LESSONS.includes(activeLesson.id) && !hasKey && (
+                  <div style={{margin:"0 10px 10px",background:D?"#1e1a2e":"#f5f0ff",border:"1px solid #a855f7",borderRadius:6,padding:"10px 12px",display:"flex",gap:10,alignItems:"center"}}>
+                    <span style={{fontSize:18,flexShrink:0}}>🔑</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:"bold",color:"#a855f7",marginBottom:2}}>API key required for this lesson</div>
+                      <div style={{fontSize:11,color:T.textDim,lineHeight:1.5}}>This lesson makes live API calls. Add a free Gemini key to run the code — takes 30 seconds.</div>
+                    </div>
+                    <button onClick={()=>setShowSettings(true)}
+                      style={{background:"#a855f7",color:"#fff",border:"none",borderRadius:5,padding:"5px 10px",fontSize:11,fontWeight:"bold",flexShrink:0,cursor:"pointer"}}>
+                      ⚙️ Setup AI →
+                    </button>
+                  </div>
+                )}
+
+                {/* AI lesson provider badge — shown when key is set */}
+                {AI_LESSONS.includes(activeLesson.id) && hasKey && (
+                  <div style={{margin:"0 10px 10px",background:D?"#1a2e1a":"#f0fdf4",border:"1px solid #00D08444",borderRadius:6,padding:"7px 12px",display:"flex",gap:8,alignItems:"center"}}>
+                    <span style={{fontSize:14}}>✅</span>
+                    <div style={{fontSize:11,color:"#00D084"}}>
+                      Code auto-configured for <strong>{activeProvider}</strong> — just hit ▶ Run
+                    </div>
+                  </div>
+                )}
                 <div style={{margin:"0 10px 12px"}}>
                   {activeLesson.lines.map((line,i)=>{
                     if(!line.code && line.exp===null) return <div key={i} style={{height:5}}/>;
