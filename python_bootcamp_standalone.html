@@ -4,9 +4,18 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>🐍 Python Bootcamp</title>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script>
+window.addEventListener('unhandledrejection', function(event) {
+  console.error('Unhandled Promise rejection:', event.reason);
+  var d = document.getElementById('loading-screen');
+  if (d && d.style.display !== 'none') {
+    d.innerHTML = '<div style="color:#e06c75;font-family:monospace;padding:30px;white-space:pre-wrap">❌ Async Error: ' + (event.reason && event.reason.message || event.reason) + '</div>';
+  }
+});
+</script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js" crossorigin="anonymous"></script>
 <!-- CodeMirror -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css"/>
@@ -46,15 +55,34 @@
 <div id="root"></div>
 <script>
 window.onerror = function(msg, src, line, col, err) {
+  if (err) console.error('Full error:', err);
+  console.error('Script error details:', msg, 'src:', src, 'line:', line, 'col:', col);
   var d = document.getElementById('loading-screen');
-  if (d) {
-    d.innerHTML = '<div style="color:#e06c75;font-family:monospace;padding:30px;max-width:700px;white-space:pre-wrap">'
-      + '<div style="font-size:20px;margin-bottom:12px">❌ JavaScript Error</div>'
-      + '<div style="font-size:13px;margin-bottom:8px"><b>Message:</b> ' + msg + '</div>'
-      + '<div style="font-size:13px;margin-bottom:8px"><b>Line:</b> ' + line + ' Col: ' + col + '</div>'
-      + '<div style="font-size:12px;color:#94a3b8">' + (src||'') + '</div>'
-      + '</div>';
+  if (!d) return;
+  // If cross-origin "Script error.", try Babel diagnostic
+  if (msg === 'Script error.' && typeof Babel !== 'undefined') {
+    var babelSrc = document.querySelector('script[type="text/babel"]');
+    if (babelSrc) {
+      try {
+        Babel.transform(babelSrc.textContent, {presets:['react']});
+        // No Babel error — show generic message
+        d.innerHTML = '<div style="color:#e06c75;font-family:monospace;padding:30px">❌ Runtime Error (Script error. — unknown cross-origin error)</div>';
+      } catch(bErr) {
+        d.innerHTML = '<div style="color:#e06c75;font-family:monospace;padding:30px;white-space:pre-wrap">'
+          + '<div style="font-size:18px;margin-bottom:12px">❌ Babel Parse Error</div>'
+          + '<div style="font-size:13px;background:#1e1e2e;padding:12px;border-radius:4px;margin-bottom:8px">' + bErr.message + '</div>'
+          + '<div style="font-size:12px;color:#94a3b8">Fix the syntax error above, then reload.</div>'
+          + '</div>';
+        return;
+      }
+    }
   }
+  d.innerHTML = '<div style="color:#e06c75;font-family:monospace;padding:30px;max-width:700px;white-space:pre-wrap">'
+    + '<div style="font-size:20px;margin-bottom:12px">❌ JavaScript Error</div>'
+    + '<div style="font-size:13px;margin-bottom:8px"><b>Message:</b> ' + msg + '</div>'
+    + '<div style="font-size:13px;margin-bottom:8px"><b>Line:</b> ' + line + ' Col: ' + col + '</div>'
+    + '<div style="font-size:12px;color:#94a3b8">' + (src||'') + '</div>'
+    + '</div>';
 };
 window.addEventListener('unhandledrejection', function(e) {
   var d = document.getElementById('loading-screen');
@@ -465,9 +493,384 @@ const curriculum = [
         {code:"run_agent('What time is it right now?')", exp:"▶️ Agent should use the time tool."}
       ]},
   ]},
+  { id:8, phase:"Phase 8", title:"Data & Files", icon:"🗄️", color:"#f59e0b", lessons:[
+    { id:"8a", title:"CSV & JSON Files", duration:"40 min", project:"🎯 Sales Report Generator",
+      memTrick:"💡 CSV = spreadsheet as plain text. JSON = Python dict saved to a file. Both are just text files with rules.",
+      concepts:["csv.reader","csv.writer","json.load","json.dump","with open()"],
+      lines:[
+        {code:"import csv, json", exp:"📦 IMPORT — two built-in modules. csv handles spreadsheet files. json handles data files. No pip needed."},
+        {code:"", exp:null},
+        {code:"# ── PART 1: Read a CSV ──", exp:"💬 We'll create a fake sales CSV in memory, then read it back."},
+        {code:"import io", exp:"📦 io.StringIO lets us fake a file in memory — great for demos without real files."},
+        {code:"", exp:null},
+        {code:"csv_data = '''name,sales,region", exp:"📝 RAW STRING — triple quotes let us write multi-line text. This is our fake CSV content."},
+        {code:"Alice,15000,North", exp:"📋 ROW 1 — Alice sold 15000 in the North region."},
+        {code:"Bob,22000,South", exp:"📋 ROW 2 — Bob sold 22000 in the South region."},
+        {code:"Carol,18500,North", exp:"📋 ROW 3 — Carol sold 18500 in the North region."},
+        {code:"Dave,9800,East'''", exp:"📋 ROW 4 — Dave sold 9800 in the East region. Triple quotes close here."},
+        {code:"", exp:null},
+        {code:"reader = csv.reader(io.StringIO(csv_data))", exp:"📖 csv.reader turns the text into rows we can loop over. io.StringIO wraps the string so it acts like a file."},
+        {code:"headers = next(reader)", exp:"⏭️ next() reads ONE row — the first row is always headers. We skip it so it doesn't appear in our data."},
+        {code:"print('Headers:', headers)", exp:"🖨️ Print the column names: ['name', 'sales', 'region']"},
+        {code:"", exp:null},
+        {code:"total = 0", exp:"🔢 COUNTER — start at 0, we'll add each person's sales."},
+        {code:"for row in reader:", exp:"🔁 LOOP — reader gives us one row at a time as a list like ['Alice', '15000', 'North']."},
+        {code:"    name, sales, region = row", exp:"📦 UNPACK — split the list into 3 variables at once. Cleaner than row[0], row[1], row[2]."},
+        {code:"    total += int(sales)", exp:"➕ int() converts '15000' (text) to 15000 (number). += adds to total."},
+        {code:"    print(f'{name} ({region}): ${int(sales):,}')", exp:"🖨️ f-string with :, format adds comma separators — 15000 becomes 15,000."},
+        {code:"", exp:null},
+        {code:"print(f'\\nTotal Sales: ${total:,}')", exp:"🖨️ Final total with comma formatting. \\n adds a blank line before it."},
+        {code:"", exp:null},
+        {code:"# ── PART 2: Save & Load JSON ──", exp:"💬 JSON is perfect for saving structured data like dicts and lists."},
+        {code:"report = {", exp:"📦 DICT — build a summary report as a Python dictionary."},
+        {code:"    'total_sales': total,", exp:"🔑 KEY — store the total we calculated above."},
+        {code:"    'top_performer': 'Bob',", exp:"🔑 KEY — hardcoded for this demo. In real code you'd calculate this."},
+        {code:"    'regions': ['North', 'South', 'East']", exp:"🔑 KEY — a list of regions as a value."},
+        {code:"}", exp:"🔒 Close the dict."},
+        {code:"", exp:null},
+        {code:"json_str = json.dumps(report, indent=2)", exp:"💾 json.dumps = dict TO string. indent=2 makes it pretty-printed (indented). The 's' in dumps = string."},
+        {code:"print('\\nJSON Output:')", exp:"🖨️ Label before the JSON output."},
+        {code:"print(json_str)", exp:"🖨️ Print the formatted JSON — looks like a nicely indented dict."},
+        {code:"", exp:null},
+        {code:"loaded = json.loads(json_str)", exp:"📂 json.loads = string TO dict. The 's' means 'from string'. Now loaded is a Python dict again."},
+        {code:"print('\\nLoaded back:', loaded['top_performer'], 'was top performer')", exp:"✅ Prove we can read back from JSON — access like any dict key."}
+      ]},
+    { id:"8b", title:"Mini Database (Dicts + Lists)", duration:"45 min", project:"🎯 Contacts Database",
+      memTrick:"💡 Before SQL databases, devs stored data in lists of dicts. Each dict = one row. A list of dicts = a table. You can filter, sort, and search — no SQL needed!",
+      concepts:["list of dicts","filtering","sorted()","list comprehension","CRUD"],
+      lines:[
+        {code:"# 🎯 PROJECT: Contacts Database (pure Python)", exp:"💬 We'll build a real contacts database using only lists and dicts — no libraries needed!"},
+        {code:"", exp:null},
+        {code:"# Our 'table' is a list of dicts", exp:"🗄️ DATABASE — a list where each item is a dict representing one row/record."},
+        {code:"contacts = []", exp:"📦 Start with an empty list — our empty table."},
+        {code:"", exp:null},
+        {code:"# INSERT — add contacts", exp:"💬 INSERT = add a new row to our table."},
+        {code:"contacts.append({'name':'Alice','phone':'555-1234','city':'New York'})", exp:"➕ .append() adds a new dict (row) to the list."},
+        {code:"contacts.append({'name':'Bob',  'phone':'555-5678','city':'London'})", exp:"➕ Add Bob."},
+        {code:"contacts.append({'name':'Carol','phone':'555-9999','city':'New York'})", exp:"➕ Add Carol."},
+        {code:"", exp:null},
+        {code:"# SELECT ALL — print every contact", exp:"💬 SELECT * = loop through all rows and print them."},
+        {code:"print('All contacts:')", exp:"🖨️ Label."},
+        {code:"for i, c in enumerate(contacts, 1):", exp:"🔁 enumerate() gives us index + item. Start counting at 1."},
+        {code:"    print(f'  [{i}] {c[\"name\"]} - {c[\"phone\"]} - {c[\"city\"]}')", exp:"🖨️ Print each contact. f-string fills in the values."},
+        {code:"", exp:null},
+        {code:"# SELECT WHERE — filter by city", exp:"💬 WHERE city = 'New York' becomes a list comprehension."},
+        {code:"ny = [c for c in contacts if c['city'] == 'New York']", exp:"🔍 List comprehension = filter. Keep only contacts where city matches."},
+        {code:"print('\\nNew York contacts:')", exp:"🖨️ Label with newline."},
+        {code:"for c in ny:", exp:"🔁 Loop through filtered results."},
+        {code:"    print(f'  {c[\"name\"]}: {c[\"phone\"]}')", exp:"🖨️ Print name and phone."},
+        {code:"", exp:null},
+        {code:"# UPDATE — change a value", exp:"💬 UPDATE = find the row and change a field."},
+        {code:"for c in contacts:", exp:"🔁 Loop to find the right contact."},
+        {code:"    if c['name'] == 'Bob':", exp:"🔍 Find Bob."},
+        {code:"        c['city'] = 'Paris'", exp:"✏️ UPDATE — change Bob's city to Paris. Dicts are mutable."},
+        {code:"print('\\nAfter update:', contacts[1]['city'])", exp:"🖨️ Should print: Paris."},
+        {code:"", exp:null},
+        {code:"# DELETE — remove a contact", exp:"💬 DELETE = remove the matching item from the list."},
+        {code:"contacts = [c for c in contacts if c['name'] != 'Carol']", exp:"🗑️ Keep everyone EXCEPT Carol. This is how you delete with list comprehensions."},
+        {code:"print('After delete:', len(contacts), 'contacts')", exp:"🖨️ Should print: 2 contacts."}
+      ]},
+    { id:"8c", title:"Data Analysis (CSV + statistics)", duration:"50 min", project:"🎯 Student Grade Analyzer",
+      memTrick:"💡 csv module reads spreadsheets line by line. statistics module does math. Together they replace 80% of what pandas does for beginner projects.",
+      concepts:["csv","statistics","DictReader","list comprehension","sorted()"],
+      lines:[
+        {code:"# 🎯 PROJECT: Student Grade Analyzer", exp:"💬 Analyze student scores using only built-in Python — csv and statistics modules. Both work in Pyodide!"},
+        {code:"import csv, io, statistics", exp:"📦 csv = read spreadsheets. io = fake a file in memory. statistics = mean, median, etc. All built-in!"},
+        {code:"", exp:null},
+        {code:"csv_data = '''name,math,science,english,grade", exp:"📝 Triple-quote string = our fake CSV file. First line = headers."},
+        {code:"Alice,92,88,95,A", exp:"📋 Row 1 — Alice's scores."},
+        {code:"Bob,74,80,68,B", exp:"📋 Row 2 — Bob's scores."},
+        {code:"Carol,55,60,72,C", exp:"📋 Row 3 — Carol's scores."},
+        {code:"Dave,88,91,85,A", exp:"📋 Row 4 — Dave's scores."},
+        {code:"Eve,61,55,58,D", exp:"📋 Row 5 — Eve's scores."},
+        {code:"Frank,95,97,93,A'''", exp:"📋 Row 6 — Frank's scores. Close the triple-quote string."},
+        {code:"", exp:null},
+        {code:"reader = csv.DictReader(io.StringIO(csv_data))", exp:"📖 DictReader turns each row into a dict. Key = column name. io.StringIO makes a string act like a file."},
+        {code:"students = list(reader)", exp:"📋 Convert the reader to a list of dicts so we can loop through multiple times."},
+        {code:"", exp:null},
+        {code:"print(f'Students loaded: {len(students)}')", exp:"🖨️ How many rows did we read?"},
+        {code:"print('Columns:', list(students[0].keys()))", exp:"🖨️ What are the column names? .keys() on the first row shows all headers."},
+        {code:"", exp:null},
+        {code:"# Average math score", exp:"💬 statistics.mean() = add all values and divide by count."},
+        {code:"math_scores = [int(s['math']) for s in students]", exp:"🔢 List comprehension: get the 'math' value from each student. int() converts the string to a number."},
+        {code:"print(f'Avg math: {statistics.mean(math_scores):.1f}')", exp:"🖨️ :.1f = format to 1 decimal place."},
+        {code:"", exp:null},
+        {code:"# Grade A students", exp:"💬 Filter to only grade A students."},
+        {code:"top = [s for s in students if s['grade'] == 'A']", exp:"🔍 List comprehension filter: keep only students where grade == 'A'."},
+        {code:"print('\\nGrade A students:')", exp:"🖨️ Label."},
+        {code:"for s in top:", exp:"🔁 Loop through top students."},
+        {code:"    avg = statistics.mean([int(s[c]) for c in ['math','science','english']])", exp:"🧮 Each student's average across 3 subjects."},
+        {code:"    print(f'  {s[\"name\"]}: avg {avg:.1f}')", exp:"🖨️ Print name and average score."},
+        {code:"", exp:null},
+        {code:"# Sort by math score", exp:"💬 sorted() with key= lets you sort by any field."},
+        {code:"ranked = sorted(students, key=lambda s: int(s['math']), reverse=True)", exp:"📊 Sort descending by math score. lambda s: int(s['math']) = the sort key function."},
+        {code:"print('\\nRanked by math:')", exp:"🖨️ Label."},
+        {code:"for i, s in enumerate(ranked, 1):", exp:"🔁 enumerate starts at 1 for ranking."},
+        {code:"    print(f'  #{i} {s[\"name\"]}: {s[\"math\"]}')", exp:"🖨️ Print rank, name, and math score."}
+      ]}
+  ]},
+  { id:9, phase:"Phase 9", title:"Testing & Debugging", icon:"🧪", color:"#8b5cf6", lessons:[
+    { id:"9a", title:"Reading Error Messages", duration:"30 min", project:"🎯 Error Decoder",
+      memTrick:"💡 Read errors BOTTOM UP. The last line = what went wrong. The lines above = where it happened. Type Error = wrong type. Name Error = typo.",
+      concepts:["SyntaxError","TypeError","NameError","IndexError","traceback","try/except"],
+      lines:[
+        {code:"# 🎯 PROJECT: Learn to read and handle Python errors", exp:"💬 Errors are normal! Every programmer sees them daily. Learning to read them is a superpower."},
+        {code:"", exp:null},
+        {code:"# ── TypeError ──", exp:"💬 TypeError = you used the wrong type. Like adding a number to a word."},
+        {code:"try:", exp:"🛡️ try block — put risky code here. If it crashes, Python jumps to except instead of stopping."},
+        {code:"    result = 'Score: ' + 95", exp:"💥 This crashes! Can't add string + int. Fix: str(95) or f'Score: {95}'"},
+        {code:"except TypeError as e:", exp:"🎯 Catches TypeError specifically. 'as e' stores the error message in variable e."},
+        {code:"    print(f'TypeError caught: {e}')", exp:"🖨️ Prints: TypeError caught: can only concatenate str (not \"int\") to str"},
+        {code:"", exp:null},
+        {code:"# ── NameError ──", exp:"💬 NameError = you used a variable that doesn't exist. Usually a typo."},
+        {code:"try:", exp:"🛡️ Another try block."},
+        {code:"    print(usernmae)", exp:"💥 Typo! 'usernmae' doesn't exist. Should be 'username'."},
+        {code:"except NameError as e:", exp:"🎯 Catches the NameError."},
+        {code:"    print(f'NameError caught: {e}')", exp:"🖨️ Prints: name 'usernmae' is not defined — Python tells you exactly which name is wrong."},
+        {code:"", exp:null},
+        {code:"# ── IndexError ──", exp:"💬 IndexError = you tried to access a list position that doesn't exist."},
+        {code:"fruits = ['apple', 'banana', 'cherry']", exp:"📋 List with 3 items. Valid indexes are 0, 1, 2."},
+        {code:"try:", exp:"🛡️ Try block."},
+        {code:"    print(fruits[10])", exp:"💥 Index 10 doesn't exist! List only has indexes 0-2."},
+        {code:"except IndexError as e:", exp:"🎯 Catches IndexError."},
+        {code:"    print(f'IndexError caught: {e}')", exp:"🖨️ Prints: list index out of range"},
+        {code:"", exp:null},
+        {code:"# ── Catch any error ──", exp:"💬 Use bare 'except Exception' to catch everything. Good for logging unknown errors."},
+        {code:"def safe_divide(a, b):", exp:"🔧 FUNCTION — wraps division with error handling."},
+        {code:"    try:", exp:"🛡️ Try the division."},
+        {code:"        return a / b", exp:"➗ Normal division."},
+        {code:"    except ZeroDivisionError:", exp:"🎯 ZeroDivisionError = dividing by zero."},
+        {code:"        return 'Error: cannot divide by zero'", exp:"↩️ Return a friendly message instead of crashing."},
+        {code:"    except TypeError:", exp:"🎯 TypeError if a or b aren't numbers."},
+        {code:"        return 'Error: inputs must be numbers'", exp:"↩️ Friendly message for wrong types."},
+        {code:"", exp:null},
+        {code:"print(safe_divide(10, 2))", exp:"✅ Returns 5.0 — no error."},
+        {code:"print(safe_divide(10, 0))", exp:"✅ Returns 'Error: cannot divide by zero' — no crash."},
+        {code:"print(safe_divide(10, 'x'))", exp:"✅ Returns 'Error: inputs must be numbers' — no crash."}
+      ]},
+    { id:"9b", title:"Writing Tests", duration:"40 min", project:"🎯 Test Your Own Functions",
+      memTrick:"💡 A test = call your function + check the result. assert means 'I promise this is true — crash if it isn't'. Tests = your safety net.",
+      concepts:["assert","unittest","test functions","assertEqual","setUp","edge cases"],
+      lines:[
+        {code:"# 🎯 PROJECT: Write tests for a simple calculator", exp:"💬 Tests check that your code does what you expect. Write them BEFORE you think your code is done."},
+        {code:"import unittest", exp:"📦 unittest — built into Python. No pip needed. The standard testing framework."},
+        {code:"", exp:null},
+        {code:"# ── The code we want to test ──", exp:"💬 First, let's write a simple calculator with a bug we'll catch with tests."},
+        {code:"def add(a, b): return a + b", exp:"➕ Simple add function."},
+        {code:"def subtract(a, b): return a - b", exp:"➖ Simple subtract."},
+        {code:"def multiply(a, b): return a * b", exp:"✖️ Simple multiply."},
+        {code:"def divide(a, b):", exp:"➗ Divide — needs error handling."},
+        {code:"    if b == 0: raise ValueError('Cannot divide by zero')", exp:"🛡️ raise creates an error on purpose. ValueError = the value is wrong/invalid."},
+        {code:"    return a / b", exp:"➗ Normal division if b is not zero."},
+        {code:"", exp:null},
+        {code:"# ── Quick assertions (simplest tests) ──", exp:"💬 assert = 'I promise this is True'. If it's False, Python crashes with AssertionError."},
+        {code:"assert add(2, 3) == 5,       'add failed'", exp:"✅ 2+3=5. If this ever returns something else, we'll know immediately."},
+        {code:"assert subtract(10, 4) == 6, 'subtract failed'", exp:"✅ 10-4=6."},
+        {code:"assert multiply(3, 4) == 12, 'multiply failed'", exp:"✅ 3×4=12."},
+        {code:"assert add(0, 0) == 0,       'zero case failed'", exp:"✅ Edge case — zero inputs. Always test edge cases!"},
+        {code:"assert add(-1, 1) == 0,      'negative case failed'", exp:"✅ Edge case — negative numbers."},
+        {code:"print('All basic assertions passed!')", exp:"🎉 Only prints if ALL assertions above passed. One failure = crash before this line."},
+        {code:"", exp:null},
+        {code:"# ── Proper unittest class ──", exp:"💬 unittest.TestCase gives you better error messages and lets you run many tests at once."},
+        {code:"class TestCalculator(unittest.TestCase):", exp:"🏗️ Class inheriting from TestCase. All test methods inside will be auto-discovered."},
+        {code:"    def test_add_positive(self):", exp:"🧪 Method starting with 'test_' is auto-run. Tests positive numbers."},
+        {code:"        self.assertEqual(add(2, 3), 5)", exp:"✅ assertEqual = assert a == b, but with a better error message if it fails."},
+        {code:"    def test_add_negative(self):", exp:"🧪 Test negative numbers."},
+        {code:"        self.assertEqual(add(-1, -1), -2)", exp:"✅ -1 + -1 = -2."},
+        {code:"    def test_divide_by_zero(self):", exp:"🧪 Test that divide raises an error when b=0."},
+        {code:"        with self.assertRaises(ValueError):", exp:"✅ assertRaises = 'I expect this to raise ValueError'. Test PASSES if the error IS raised."},
+        {code:"            divide(10, 0)", exp:"💥 This should raise ValueError — and our test expects that, so it passes."},
+        {code:"", exp:null},
+        {code:"suite = unittest.TestLoader().loadTestsFromTestCase(TestCalculator)", exp:"🔍 Collect all test_ methods from our class."},
+        {code:"runner = unittest.TextTestRunner(verbosity=2)", exp:"🏃 verbosity=2 prints each test name and result."},
+        {code:"runner.run(suite)", exp:"▶️ Run all tests and print results."}
+      ]},
+    { id:"9c", title:"Debugging Tips", duration:"35 min", project:"🎯 Find & Fix 3 Bugs",
+      memTrick:"💡 Debugging order: 1) print() the value before the crash. 2) Check the TYPE not just the value. 3) Read the error message BOTTOM UP.",
+      concepts:["print debugging","type()","breakpoint()","common bugs","defensive coding"],
+      lines:[
+        {code:"# 🎯 PROJECT: Debug 3 deliberately broken functions", exp:"💬 The fastest way to learn debugging is to fix real bugs. Let's break things on purpose and fix them."},
+        {code:"", exp:null},
+        {code:"# ── Bug 1: Wrong type ──", exp:"💬 Most beginner bugs are type errors — mixing strings and numbers."},
+        {code:"def calculate_discount(price, discount_pct):", exp:"🔧 FUNCTION — should return price after discount."},
+        {code:"    # BUG: discount_pct might come in as a string '20'", exp:"💬 COMMENT — hints about the bug. In real code, inputs from users are ALWAYS strings."},
+        {code:"    discount_pct = float(discount_pct)  # FIX: convert to float first", exp:"🔧 FIX — always convert user inputs. float('20') = 20.0. Now math works."},
+        {code:"    discount = price * (discount_pct / 100)", exp:"🔢 Calculate the discount amount. 20% of price."},
+        {code:"    return round(price - discount, 2)", exp:"↩️ Subtract discount, round to 2 decimal places (money)."},
+        {code:"", exp:null},
+        {code:"print(calculate_discount(100, '20'))", exp:"✅ Returns 80.0. Without the float() fix, this would crash with TypeError."},
+        {code:"print(calculate_discount(49.99, 15))", exp:"✅ Returns 42.49. Works with both string and number input now."},
+        {code:"", exp:null},
+        {code:"# ── Bug 2: Off-by-one error ──", exp:"💬 Off-by-one = loop runs one too many or too few times. Very common in list operations."},
+        {code:"def get_last_three(items):", exp:"🔧 FUNCTION — should return the last 3 items from a list."},
+        {code:"    # BUG: items[-4:-1] misses the last item!", exp:"💬 Common mistake: -1 stops BEFORE the last element."},
+        {code:"    return items[-3:]  # FIX: -3: means 'from 3rd-last to END'", exp:"🔧 FIX — items[-3:] with no end = goes all the way to the end. Includes the last item."},
+        {code:"", exp:null},
+        {code:"scores = [88, 72, 95, 61, 84, 90, 77]", exp:"📋 7 scores. Last 3 should be [84, 90, 77]."},
+        {code:"print('Last 3:', get_last_three(scores))", exp:"✅ Prints [84, 90, 77]. The fix works."},
+        {code:"", exp:null},
+        {code:"# ── Bug 3: Mutating a list while looping ──", exp:"💬 Never modify a list while you're iterating over it — unpredictable behavior."},
+        {code:"def remove_negatives(numbers):", exp:"🔧 FUNCTION — should remove all negative numbers."},
+        {code:"    # BUG: removing items while looping skips items", exp:"💬 When you remove item at index 2, item at index 3 shifts to index 2 and gets skipped."},
+        {code:"    return [n for n in numbers if n >= 0]  # FIX: list comprehension", exp:"🔧 FIX — build a NEW list with only non-negatives. Don't modify the original while looping."},
+        {code:"", exp:null},
+        {code:"data = [3, -1, 7, -5, 2, -9, 8]", exp:"📋 Mixed positive and negative numbers."},
+        {code:"print('Cleaned:', remove_negatives(data))", exp:"✅ Prints [3, 7, 2, 8] — all negatives removed correctly."},
+        {code:"", exp:null},
+        {code:"# ── Debugging tip: use print() + type() ──", exp:"💬 The fastest debugger is print(). Add type() to see what Python thinks something is."},
+        {code:"mystery = '42'", exp:"📦 Looks like a number but it's a string!"},
+        {code:"print(f'Value: {mystery}, Type: {type(mystery).__name__}')", exp:"🔍 Prints: Value: 42, Type: str — now you can see the problem."},
+        {code:"print(f'After int(): {int(mystery)}, Type: {type(int(mystery)).__name__}')", exp:"🔧 int() converts string to integer. Type is now int."}
+      ]}
+  ]},
+  { id:10, phase:"Phase 10", title:"Real Projects", icon:"🔄", color:"#ec4899", lessons:[
+    { id:"10a", title:"CLI Todo App", duration:"45 min", project:"🎯 Command-Line Todo List",
+      memTrick:"💡 CLI app = a loop that reads commands. while True + input() = your app running forever. 'break' = quit. Dict or list = your database.",
+      concepts:["while loop","input()","list operations","functions","CLI design"],
+      lines:[
+        {code:"# 🎯 PROJECT: Full command-line Todo app", exp:"💬 This is a COMPLETE app — not just snippets. It runs in a loop and responds to commands. Real software!"},
+        {code:"", exp:null},
+        {code:"todos = []  # Our in-memory database", exp:"📋 LIST — stores all todos. In a real app you'd save this to a file with json.dump()."},
+        {code:"", exp:null},
+        {code:"def show_todos():", exp:"🔧 FUNCTION — display all todos with numbers. Functions keep code organized."},
+        {code:"    if not todos:", exp:"❓ if not todos = if the list is empty. Empty list is 'falsy' in Python."},
+        {code:"        print('  No todos yet!')", exp:"🖨️ Friendly empty state message."},
+        {code:"        return", exp:"↩️ return early — no point continuing if list is empty."},
+        {code:"    for i, todo in enumerate(todos, 1):", exp:"🔁 enumerate(list, 1) gives (1, item), (2, item)... The 1 means start counting from 1."},
+        {code:"        status = '✅' if todo['done'] else '⬜'", exp:"✅ TERNARY — one-line if/else. If done=True show ✅, else show ⬜."},
+        {code:"        task = todo['task']", exp:"📦 Get the task text from the dict using key 'task'."},
+        {code:"        print(f'  {i}. {status} {task}')", exp:"🖨️ Format: '1. ✅ Buy groceries'."},
+        {code:"", exp:null},
+        {code:"def add_todo(task):", exp:"🔧 FUNCTION — add a new todo."},
+        {code:"    todos.append({'task': task, 'done': False})", exp:"➕ append adds to end of list. Each todo is a dict with 'task' and 'done' keys."},
+        {code:"    print(f'  Added: {task}')", exp:"✅ Confirm the addition."},
+        {code:"", exp:null},
+        {code:"def complete_todo(num):", exp:"🔧 FUNCTION — mark a todo as done by its number."},
+        {code:"    if 1 <= num <= len(todos):", exp:"🛡️ VALIDATION — check number is in valid range. len(todos) is the max valid index."},
+        {code:"        todos[num-1]['done'] = True", exp:"✅ num-1 converts from 1-based display to 0-based index. Set done to True."},
+        {code:"        task = todos[num-1]['task']", exp:"📦 Get the task text from the selected todo."},
+        {code:"        print(f'  Completed: {task}')", exp:"🖨️ Confirm which task was completed."},
+        {code:"    else:", exp:"❌ Number was out of range."},
+        {code:"        print('  Invalid number')", exp:"🖨️ Friendly error message."},
+        {code:"", exp:null},
+        {code:"# ── Demo the app ──", exp:"💬 Pyodide can't use input() interactively, so let's simulate commands."},
+        {code:"print('=== TODO APP DEMO ===')", exp:"🖨️ Header."},
+        {code:"add_todo('Learn Python')", exp:"➕ Add first todo."},
+        {code:"add_todo('Build a project')", exp:"➕ Add second todo."},
+        {code:"add_todo('Push to GitHub')", exp:"➕ Add third todo."},
+        {code:"print('\\nYour todos:')", exp:"🖨️ Label."},
+        {code:"show_todos()", exp:"📋 Display all 3 todos."},
+        {code:"complete_todo(1)", exp:"✅ Mark first todo as done."},
+        {code:"print('\\nAfter completing #1:')", exp:"🖨️ Label."},
+        {code:"show_todos()", exp:"📋 Show updated list — #1 now has ✅."},
+        {code:"", exp:null},
+        {code:"# Summary stats", exp:"💬 A real app would show progress."},
+        {code:"done_count = sum(1 for t in todos if t['done'])", exp:"🔢 Generator expression — count todos where done=True. sum() adds up all the 1s."},
+        {code:"print(f'\\nProgress: {done_count}/{len(todos)} tasks done')", exp:"📊 Show completion ratio."}
+      ]},
+    { id:"10b", title:"Number Guessing Game", duration:"35 min", project:"🎯 Interactive Guessing Game",
+      memTrick:"💡 Games = state + loop + input. State = current score, lives. Loop = keep playing. Input = player's choice. random.randint() = random number.",
+      concepts:["random","while loop","game state","input validation","score tracking"],
+      lines:[
+        {code:"# 🎯 PROJECT: Number guessing game with lives and scoring", exp:"💬 Games teach you loops, state, and user input all at once. Plus they're fun to build!"},
+        {code:"import random", exp:"📦 random — built into Python. random.randint(1,100) gives a random int between 1 and 100."},
+        {code:"", exp:null},
+        {code:"def play_game(secret=None):", exp:"🔧 FUNCTION — secret=None lets us pass a fixed number for testing, or use None for random."},
+        {code:"    if secret is None:", exp:"❓ If no secret was passed, generate one randomly."},
+        {code:"        secret = random.randint(1, 100)", exp:"🎲 Random integer from 1 to 100 inclusive."},
+        {code:"    lives = 7", exp:"❤️ Player starts with 7 lives."},
+        {code:"    guesses = []", exp:"📋 Track all guesses so we can show history."},
+        {code:"    won = False", exp:"🏁 Track if player won."},
+        {code:"", exp:null},
+        {code:"    print('🎮 Guess the number between 1-100!')", exp:"🖨️ Welcome message."},
+        {code:"    print(f'You have {lives} lives.\\n')", exp:"🖨️ Show starting lives."},
+        {code:"", exp:null},
+        {code:"    # Simulate guesses for demo (replace with input() in real use)", exp:"💬 In Pyodide we can't use input() interactively, so we simulate a game."},
+        {code:"    demo_guesses = [50, 75, 60, 55, secret]", exp:"📋 DEMO — these simulate what a player might guess. Last guess is the secret so we always win."},
+        {code:"", exp:null},
+        {code:"    for guess in demo_guesses:", exp:"🔁 In a real app: while lives > 0 and not won: guess = int(input('Guess: '))"},
+        {code:"        if lives == 0: break", exp:"🛡️ Stop if out of lives."},
+        {code:"        guesses.append(guess)", exp:"📋 Record this guess."},
+        {code:"        lives -= 1", exp:"❤️ Use one life."},
+        {code:"        print(f'Guess #{len(guesses)}: {guess}  ', end='')", exp:"🖨️ Print guess number and value. end='' keeps cursor on same line."},
+        {code:"        if guess < secret:", exp:"❓ Too low?"},
+        {code:"            print('📈 Too low!')", exp:"🖨️ Hint: go higher."},
+        {code:"        elif guess > secret:", exp:"❓ Too high?"},
+        {code:"            print('📉 Too high!')", exp:"🖨️ Hint: go lower."},
+        {code:"        else:", exp:"🎯 Exact match!"},
+        {code:"            print('🎉 Correct!')", exp:"🎉 Player guessed right!"},
+        {code:"            won = True", exp:"🏆 Set won flag."},
+        {code:"            break", exp:"⏹️ Exit the loop — no more guesses needed."},
+        {code:"", exp:null},
+        {code:"    # Game over", exp:"💬 Show results after the game."},
+        {code:"    print(f'\\n--- RESULT ---')", exp:"🖨️ Section divider."},
+        {code:"    if won:", exp:"🏆 Player won?"},
+        {code:"        score = lives * 10 + (7 - len(guesses)) * 5", exp:"🔢 SCORING — remaining lives × 10, plus bonus for fewer guesses. Rewards efficiency."},
+        {code:"        print(f'🏆 You won! Score: {score}')", exp:"🎉 Show score."},
+        {code:"    else:", exp:"💔 Player lost."},
+        {code:"        print(f'💀 Game over! The number was {secret}')", exp:"🖨️ Reveal the secret number."},
+        {code:"    print(f'Guesses: {guesses}')", exp:"📋 Show all guesses history."},
+        {code:"", exp:null},
+        {code:"play_game(secret=55)  # Fixed secret for predictable demo output", exp:"▶️ Play with secret=55 so output is consistent. Remove 'secret=55' for real random games."}
+      ]},
+    { id:"10c", title:"Budget Tracker", duration:"50 min", project:"🎯 Personal Budget App",
+      memTrick:"💡 Budget app = list of transactions + calculations. Each transaction is a dict. Filter by type to split income vs expense. sum() everything.",
+      concepts:["dicts","list comprehensions","filtering","f-strings","JSON save/load","summary reports"],
+      lines:[
+        {code:"# 🎯 PROJECT: Personal budget tracker with categories", exp:"💬 This project combines: dicts, lists, filtering, math, and formatting. A real-world useful app!"},
+        {code:"import json, io", exp:"📦 json for save/load. io for in-memory file demo."},
+        {code:"from datetime import date", exp:"📦 date for today's date on transactions."},
+        {code:"", exp:null},
+        {code:"class BudgetTracker:", exp:"🏗️ CLASS — groups all budget functions together. Better than loose functions."},
+        {code:"    def __init__(self):", exp:"🔧 __init__ runs when we create a BudgetTracker(). Sets up empty state."},
+        {code:"        self.transactions = []", exp:"📋 LIST — stores all transactions as dicts."},
+        {code:"", exp:null},
+        {code:"    def add(self, description, amount, category, kind):", exp:"🔧 METHOD — add one transaction. kind = 'income' or 'expense'."},
+        {code:"        self.transactions.append({", exp:"➕ Add a new dict to the list."},
+        {code:"            'desc':     description,", exp:"📝 What the transaction is for."},
+        {code:"            'amount':   abs(amount),", exp:"🔢 abs() makes it always positive. We track sign via 'kind'."},
+        {code:"            'category': category,", exp:"🏷️ e.g. 'food', 'salary', 'rent'."},
+        {code:"            'kind':     kind,", exp:"📌 'income' or 'expense'."},
+        {code:"            'date':     str(date.today())", exp:"📅 Today's date as a string e.g. '2025-03-07'."},
+        {code:"        })", exp:"🔒 Close the dict and append call."},
+        {code:"", exp:null},
+        {code:"    def summary(self):", exp:"🔧 METHOD — calculate and print a full summary."},
+        {code:"        income  = sum(t['amount'] for t in self.transactions if t['kind']=='income')", exp:"💰 Generator expression — sum only income transactions. Reads as: 'sum the amounts where kind is income'."},
+        {code:"        expense = sum(t['amount'] for t in self.transactions if t['kind']=='expense')", exp:"💸 Same for expenses."},
+        {code:"        balance = income - expense", exp:"🏦 Balance = what's left after expenses."},
+        {code:"        print(f'Income:   ${income:>8,.2f}')", exp:"🖨️ :>8 = right-align in 8 chars. , = comma thousands separator. .2f = 2 decimal places."},
+        {code:"        print(f'Expenses: ${expense:>8,.2f}')", exp:"🖨️ Same format for expenses."},
+        {code:"        print(f'Balance:  ${balance:>8,.2f}')", exp:"🖨️ Balance — could be negative if overspent."},
+        {code:"        s = 'Surplus' if balance >= 0 else 'Deficit'", exp:"📦 Compute the status string first — avoids putting complex logic inside the f-string."},
+        {code:"        print(f'Status:   {s}')", exp:"🖨️ Now just print the variable."},
+        {code:"", exp:null},
+        {code:"    def by_category(self):", exp:"🔧 METHOD — breakdown of expenses by category."},
+        {code:"        cats = {}", exp:"📦 DICT — will map category name to total amount."},
+        {code:"        for t in self.transactions:", exp:"🔁 Loop all transactions."},
+        {code:"            if t['kind'] == 'expense':", exp:"❓ Only count expenses for the breakdown."},
+        {code:"                cats[t['category']] = cats.get(t['category'], 0) + t['amount']", exp:"➕ .get(key, 0) = get current total, or 0 if first time seeing this category. Then add this amount."},
+        {code:"        print('\\nExpenses by category:')", exp:"🖨️ Section header."},
+        {code:"        for cat, total in sorted(cats.items(), key=lambda x: -x[1]):", exp:"🔁 Sort by total descending. lambda x: -x[1] means 'sort by the value, biggest first'."},
+        {code:"            print(f'  {cat:<12} ${total:,.2f}')", exp:"🖨️ :<12 = left-align in 12 chars. Neat columns."},
+        {code:"", exp:null},
+        {code:"# ── Demo ──", exp:"💬 Create a tracker and add some transactions."},
+        {code:"b = BudgetTracker()", exp:"🏗️ Create instance."},
+        {code:"b.add('Monthly salary',  5000, 'salary',    'income')", exp:"💰 Add income."},
+        {code:"b.add('Freelance work',  1200, 'freelance', 'income')", exp:"💰 Add income."},
+        {code:"b.add('Rent',            1800, 'housing',   'expense')", exp:"💸 Add expense."},
+        {code:"b.add('Groceries',        350, 'food',      'expense')", exp:"💸 Add expense."},
+        {code:"b.add('Netflix + Spotify', 25, 'subscriptions','expense')", exp:"💸 Add expense."},
+        {code:"b.add('Gym membership',    50, 'health',    'expense')", exp:"💸 Add expense."},
+        {code:"b.add('Coffee shops',      80, 'food',      'expense')", exp:"💸 More food expense — will combine with Groceries in by_category."},
+        {code:"", exp:null},
+        {code:"print('=== BUDGET SUMMARY ===')", exp:"🖨️ Header."},
+        {code:"b.summary()", exp:"📊 Print income, expenses, balance, status."},
+        {code:"b.by_category()", exp:"📊 Print breakdown by category."}
+      ]}
+  ]}
 ];
 
-const ICON_COLORS = {"💬":"#6b7280","📦":"#60a5fa","🖨️":"#34d399","🛠️":"#f472b6","🏗️":"#fb923c","❓":"#facc15","🔁":"#a78bfa","↩️":"#f87171","🔗":"#38bdf8","🌐":"#4ade80","🛡️":"#fb923c","➕":"#34d399","🔍":"#e879f9","▶️":"#00D084","✨":"#fbbf24","📝":"#9ca3af"};
+const ICON_COLORS = {"💬":"#6b7280","📦":"#60a5fa","🖨️":"#34d399","🛠️":"#f472b6","🏗️":"#fb923c","❓":"#facc15","🔁":"#a78bfa","↩️":"#f87171","🔗":"#38bdf8","🌐":"#4ade80","🛡️":"#fb923c","➕":"#34d399","🔍":"#e879f9","▶️":"#00D084","✨":"#fbbf24","📝":"#9ca3af","📖":"#60a5fa","📋":"#34d399","📊":"#a78bfa","🔢":"#fb923c","💾":"#4ade80","📂":"#fbbf24","🔌":"#38bdf8","💰":"#34d399","💸":"#f87171","🏦":"#60a5fa","🎯":"#00D084","🎲":"#e879f9","🏆":"#fbbf24","❤️":"#f87171","💥":"#f87171","🔧":"#fb923c","✅":"#34d399","🏁":"#a78bfa","⏹️":"#9ca3af","💔":"#f87171","⏭️":"#60a5fa","🔑":"#fbbf24","🔒":"#9ca3af","🔓":"#34d399","📌":"#fb923c","📅":"#60a5fa","💡":"#fbbf24","⚡":"#fbbf24","⚠️":"#fb923c","🐍":"#00D084"};
 
 const QUIZ = [
   {q:"How do you create a string variable?", a:'name = "Alex"', opts:['name == "Alex"','name = "Alex"','var name = "Alex"','set name "Alex"']},
@@ -1097,7 +1500,7 @@ function App() {
   };
 
   /* ── PERSISTED STATE ────────────────────────────────── */
-  const [activePhase,    setActivePhaseRaw]  = useState(() => parseInt(localStorage.getItem("bc_phase") || "0"));
+  const [activePhase,    setActivePhaseRaw]  = useState(() => { const v = parseInt(localStorage.getItem("bc_phase") || "0"); return (v >= 0 && v < curriculum.length) ? v : 0; });
   const [activeLesson,   setActiveLessonRaw] = useState(() => { try { const s=localStorage.getItem("bc_lesson"); return s?JSON.parse(s):null; } catch(e){return null;} });
   const [completed,      setCompletedRaw]    = useState(() => { try { const s=localStorage.getItem("bc_completed"); return s?JSON.parse(s):{}; } catch(e){return {};} });
   const [bestScore,      setBestScore]       = useState(() => parseInt(localStorage.getItem("bc_bestscore") || "0"));
@@ -1169,7 +1572,7 @@ function App() {
   const totalLessons = curriculum.reduce((a,p) => a + p.lessons.length, 0);
   const doneCount    = Object.keys(completed).length;
   const pct          = Math.round((doneCount / totalLessons) * 100);
-  const phase        = curriculum[activePhase];
+  const phase        = curriculum[activePhase] || curriculum[0];
   const hasKey       = geminiKey || openaiKey || anthropicKey;
   const activeProvider = geminiKey ? "Gemini" : openaiKey ? "OpenAI" : anthropicKey ? "Anthropic" : null;
 
@@ -1327,7 +1730,7 @@ function App() {
   };
 
   const loadLessonCode = (lesson) => {
-    let c = lesson.lines.filter(l=>l.code!==null).map(l=>l.code).join("\n").trim();
+    let c = (lesson.lines||[]).filter(l=>l.code!==null).map(l=>l.code).join("\n").trim();
     if (AI_LESSONS.includes(lesson.id)) c = adaptCodeForProvider(c);
     setCode(c);
     setOutput("");
@@ -1581,7 +1984,7 @@ function App() {
                       <span style={{fontSize:12,color:T.textMut,background:T.bgRaised,padding:"2px 7px",borderRadius:8,height:"fit-content",flexShrink:0}}>⏱ {l.duration}</span>
                     </div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                      {l.concepts.map(c=><span key={c} style={{background:T.bg,border:`1px solid ${phase.color}44`,color:phase.color,padding:"1px 5px",borderRadius:3,fontSize:13}}>{c}</span>)}
+                      {(l.concepts||[]).map(c=><span key={c} style={{background:T.bg,border:`1px solid ${phase.color}44`,color:phase.color,padding:"1px 5px",borderRadius:3,fontSize:13}}>{c}</span>)}
                     </div>
                   </div>
                 ))}

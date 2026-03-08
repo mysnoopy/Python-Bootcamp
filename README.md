@@ -1,139 +1,131 @@
-# 🐍 Python Bootcamp — Interactive Learning Platform
+# 🐍 Python Bootcamp — Interactive Browser Learner
 
-A fully self-contained HTML file for learning Python from scratch — no installs, no terminal, no server. Just download and open.
+A fully self-contained Python learning platform that runs entirely in your browser. No installs, no terminal, no server. Just download the HTML file and open it.
+
+![Python](https://img.shields.io/badge/Python-3.x-blue) ![Pyodide](https://img.shields.io/badge/Pyodide-0.24.1-green) ![React](https://img.shields.io/badge/React-18-61DAFB) ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 ---
 
 ## ✨ Features
 
-| Feature | Details |
-|---|---|
-| 🐍 7 Phases of curriculum | Python Basics → Data Types → OOP → APIs → Frameworks → AI/LLMs → AI Topics |
-| 📝 Built-in code editor | **CodeMirror** with Python syntax highlighting, line numbers, bracket matching |
-| ▶️ Run Python in browser | Powered by **Pyodide** (Python-in-WebAssembly) — zero backend needed |
-| 💡 Line-by-line explanations | Toggle on/off for each lesson |
-| 🤖 AI Chat Tutor | Context-aware Python tutor using Gemini, OpenAI, or Anthropic |
-| 💾 Progress persistence | Completed lessons, last position, and best quiz score saved via `localStorage` |
-| 🌙 Dark / ☀️ Light theme | Toggle anytime — preference remembered across sessions |
-| 📱 Mobile-friendly | Responsive layout stacks on small screens |
-| 📋 Cheat Sheet | Click-to-copy syntax reference for all key concepts |
-| 🧠 Quiz | 8-question syntax quiz with best-score tracking |
-| ↔️ Resizable panels | Drag dividers to resize explanation pane, editor, and output |
+- **Run Python in the browser** — powered by [Pyodide](https://pyodide.org/) (Python compiled to WebAssembly)
+- **19 hands-on lessons** across 10 phases — from Hello World to AI Agents
+- **Line-by-line explanations** — toggle to reveal what every line does
+- **Built-in code editor** — CodeMirror with Python syntax highlighting, Dracula/Eclipse themes
+- **AI Tutor chatbot** — powered by Gemini (free), OpenAI, or Anthropic
+- **Progress tracking** — lessons marked complete, persisted to localStorage
+- **Cheat sheet** — quick Python reference always one click away
+- **Quiz** — 8-question quiz with best-score tracking
+- **Dark / light mode** — toggle anytime
+- **FastAPI Simulator** — interactive mock REST API (Phase 5) with live mode support
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 1. Download `python_bootcamp_standalone.html`
-2. Double-click to open in your browser (Chrome or Firefox recommended)
-3. Wait ~5 seconds for Python (Pyodide) to load — you'll see **🟢 Python Ready** in the header
-4. Pick a phase from the sidebar and start coding
+2. Open it in Chrome or Firefox
+3. Click any lesson and hit **▶ Run**
 
-**On mobile?** The layout automatically stacks — sidebar hides, panes stack vertically. Works in mobile Chrome/Safari.
-
-No npm. No pip. No server. Just a browser.
-
----
-
-## 🤖 AI Chat Tutor Setup
-
-The floating **💬 button** opens a Python tutor powered by your own API key. Click **⚙️ Setup AI** in the header.
-
-| Provider | Cost | Model | Where to get key |
-|---|---|---|---|
-| 🟢 **Google Gemini** | **FREE** ⭐ | gemini-2.0-flash-exp | [aistudio.google.com](https://aistudio.google.com) → Get API Key |
-| 🟦 OpenAI | ~$0.60/1M tokens | gpt-4o-mini | [platform.openai.com](https://platform.openai.com) → API Keys |
-| 🟠 Anthropic | ~$0.80/1M tokens | claude-haiku | [console.anthropic.com](https://console.anthropic.com) → API Keys |
-
-> **Recommended:** Start with Gemini — it's free and takes 30 seconds to set up (no credit card).
-
-Keys are stored in your browser's `localStorage` only. They are never transmitted anywhere except directly to the respective API provider.
+> Internet connection required for CDN assets (React, CodeMirror, Pyodide) and the AI Tutor.
 
 ---
 
 ## 📚 Curriculum
 
-| Phase | Topics | Project |
-|---|---|---|
-| 🐍 Phase 1 — Python Basics | Variables, conditions, loops, functions | Student Bio Card, Grade Screener |
-| 📦 Phase 2 — Data Types | Lists, dicts, sets, comprehensions | Movie Library Manager, Shopping Cart |
-| 🏗️ Phase 3 — OOP | Classes, inheritance, methods | Library Book System |
-| 🔌 Phase 4 — APIs | requests, JSON, async | Live Weather Fetcher |
-| ⚙️ Phase 5 — Frameworks | FastAPI, routing, Pydantic | Book Store REST API |
-| 🤖 Phase 6 — AI/LLMs | Anthropic SDK, prompting | AI Movie Recommender |
-| 🧠 Phase 7 — AI Topics | Prompt Engineering, RAG, AI Agents | Knowledge Base, Tool-Use Agent |
+| Phase | Topic | Lessons |
+|-------|-------|---------|
+| 🐍 Phase 1 | Python Basics | 1a: Hello World & Variables · 1b: Conditions & Loops |
+| 📦 Phase 2 | Data Types | 2a: Lists & Dictionaries · 2b: Functions |
+| 🏗️ Phase 3 | OOP | 3a: Classes & Objects |
+| 🔌 Phase 4 | APIs | 4a: REST APIs & HTTP |
+| ⚙️ Phase 5 | Frameworks | 5a: FastAPI Backend *(interactive simulator)* |
+| 🤖 Phase 6 | AI / LLMs | 6a: AI API — Movie Recommender |
+| 🧠 Phase 7 | AI Topics | 7a: Prompt Engineering · 7b: RAG · 7c: AI Agents & Tools |
+| 🗄️ Phase 8 | Data & Files | 8a: CSV & JSON · 8b: Mini Database · 8c: Data Analysis |
+| 🧪 Phase 9 | Testing & Debugging | 9a: Reading Errors · 9b: Writing Tests · 9c: Debugging Tips |
+| 🔄 Phase 10 | Real Projects | 10a: CLI Todo App · 10b: Number Guessing Game · 10c: Budget Tracker |
+
+**Total:** ~9 hours of guided, project-based learning
 
 ---
 
-## 🤖 AI Lessons (Phases 6 & 7)
+## 🤖 AI Tutor Setup
 
-Phases 6 and 7 teach real AI/LLM programming with live API calls. The code is **automatically adapted** to whichever API key you've saved in ⚙️ Setup AI — no manual editing needed.
+Click the 💬 button (bottom right) to open the AI Tutor. Paste in one API key — stored locally and never sent anywhere except the provider's API.
 
-| Your key | SDK used | Model |
-|---|---|---|
-| Anthropic | `anthropic` (native) | `claude-haiku-4-5` |
-| OpenAI | `openai` | `gpt-4o-mini` |
-| Gemini | `urllib` (no pip needed) | `gemini-2.0-flash` |
-
-- A ✅ green banner confirms which provider your code is configured for
-- If no key is saved, a 🔑 banner appears with a direct **⚙️ Setup AI →** button
-- Saving a key while a lesson is open instantly injects it into the editor
+| Provider | Model | Cost | Get Key |
+|----------|-------|------|---------|
+| 🟢 Google Gemini | gemini-2.5-flash | **Free** | [aistudio.google.com](https://aistudio.google.com) |
+| 🟦 OpenAI | gpt-4o-mini | ~$0.60/1M tokens | [platform.openai.com](https://platform.openai.com) |
+| 🟠 Anthropic | claude-haiku-4-5 | ~$0.80/1M tokens | [console.anthropic.com](https://console.anthropic.com) |
 
 ---
 
-## 💾 Progress Saving
+## ⚙️ FastAPI Simulator (Phase 5)
 
-Your progress is automatically saved to `localStorage` every time you:
-- Mark a lesson complete
-- Switch to a new lesson or phase
-- Complete the quiz (best score saved)
+Phase 5 includes a full interactive REST API simulator — no server needed.
 
-When you reopen the file, you'll be taken back to where you left off.
+- **4 endpoints:** `GET /books`, `POST /books`, `PUT /books/{id}`, `DELETE /books/{id}`
+- **Live DB panel** — see your in-memory database update in real time
+- **Live Mode** — toggle to send real requests to a local FastAPI server at `localhost:8000`
 
-To reset everything, click the 🗑 button in the header (appears once you've completed at least one lesson).
-
----
-
-## 🔐 API Key Security
-
-> **⚠️ For local / personal use only. Do not host this file on a public server.**
-
-Since this is a local HTML file, API keys stored in `localStorage` are accessible only to your browser on your machine. However, be aware:
-
-| Risk | Level | Notes |
-|---|---|---|
-| Browser extensions | 🟡 Medium | Malicious extensions can read localStorage |
-| Shared computers | 🟡 Medium | Anyone on your machine can read saved keys |
-| XSS / code injection | 🟢 Low | Not a concern for a local file |
-| Network interception | 🟢 Low | Requests go directly from your browser to the API |
-| Public hosting | 🔴 High | **Do not host publicly** — keys would be exposed |
-
-### Best practices
-
-- Set spending limits on your API accounts (all providers support this)
-- Use the **Gemini** free tier to avoid any financial risk
-- Revoke and rotate keys periodically
-- Click **Clear all keys** in the Settings modal when done on a shared machine
-
-### Disclaimer
-
-By using this file, you accept full responsibility for any API keys you store in it and any costs incurred through usage. The author provides no warranty and accepts no liability.
+To run Phase 5 with a real server:
+```bash
+pip install fastapi uvicorn
+python main.py
+```
 
 ---
 
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
-|---|---|
-| UI Framework | React 18 (via CDN) + Babel Standalone |
-| Code Editor | **CodeMirror 5** — Python mode, Dracula/Eclipse themes |
-| Python Runtime | **Pyodide 0.24.1** (Python in WebAssembly) |
-| AI Chat | Gemini / OpenAI / Anthropic REST APIs |
-| Storage | Browser `localStorage` |
-| Dependencies | Zero npm packages — pure CDN |
+|-------|-----------|
+| Python runtime | [Pyodide](https://pyodide.org/) 0.24.1 (WASM) |
+| UI framework | React 18 |
+| Code editor | CodeMirror 5.65.16 |
+| JS compiler | Babel Standalone 7.23.10 |
+| AI Tutor | Gemini / OpenAI / Anthropic APIs |
+
+---
+
+## 📁 Files
+
+```
+python_bootcamp_standalone.html   # The entire app — single file, ~2300 lines
+main.py                           # FastAPI backend for Phase 5 live mode
+README.md
+```
+
+---
+
+## 🔧 Development
+
+The entire app is a single HTML file with an embedded React + Babel application. To modify:
+
+1. Open `python_bootcamp_standalone.html` in VS Code
+2. Edit the `<script type="text/babel">` section
+3. Refresh the browser — Babel recompiles on every load
+
+**Curriculum data** lives in the `curriculum` array near the top of the script. Each lesson has:
+- `id`, `title`, `duration`, `project` — metadata
+- `memTrick` — mnemonic shown above the editor
+- `concepts` — badge chips shown in the phase overview
+- `lines` — array of `{code, exp}` objects (the step-by-step code)
+
+---
+
+## 🤝 Contributing
+
+PRs welcome! Good first contributions:
+- Add new lessons to existing phases
+- Fix typos in `exp:` explanation fields
+- Add quiz questions
+- Improve mobile layout
 
 ---
 
 ## 📄 License
 
-MIT — free to use, modify, and share.
+MIT — use freely, modify freely, share freely.
