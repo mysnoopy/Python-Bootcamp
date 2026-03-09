@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>🐍 Python Bootcamp</title>
@@ -28,275 +25,145 @@ window.addEventListener('unhandledrejection', function(event) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --font-ui: 'Outfit', sans-serif;
-    --font-code: 'Space Mono', 'JetBrains Mono', 'Courier New', monospace;
-    --green:    #00FF87;
-    --green-dim:#00C864;
-    --yellow:   #FFD60A;
-    --orange:   #FF6B35;
-    --pink:     #FF3CAC;
-    --blue:     #4CC9F0;
-    --purple:   #7B2FBE;
-    --radius:   10px;
-    --radius-lg:16px;
-  }
-
-  /* ── DARK THEME ─────────────────────────────────────── */
-  body.dark {
-    --bg:         #0D0D14;
-    --bg-deep:    #07070C;
-    --bg-mid:     #13131E;
-    --bg-raised:  #1A1A28;
-    --bg-card:    #161622;
-    --border:     #2A2A40;
-    --border-hi:  #3D3D5C;
-    --text:       #F0F0FF;
-    --text-dim:   #A0A0C0;
-    --text-muted: #606080;
-    --text-faint: #3A3A58;
-    --code-bg:    #0A0A12;
-    --accent:     var(--green);
-    --accent-dim: var(--green-dim);
-    --sidebar-bg: #0A0A12;
-    --header-bg:  #0D0D14;
-    --glow:       0 0 20px rgba(0,255,135,0.15);
-    --glow-sm:    0 0 8px rgba(0,255,135,0.2);
-  }
-
-  /* ── LIGHT THEME ─────────────────────────────────────── */
-  body.light {
-    --bg:         #F5F5FF;
-    --bg-deep:    #EEEEF8;
-    --bg-mid:     #FFFFFF;
-    --bg-raised:  #F0F0FA;
-    --bg-card:    #FAFAFF;
-    --border:     #DEDEFA;
-    --border-hi:  #BCBCE0;
-    --text:       #12121E;
-    --text-dim:   #40405A;
-    --text-muted: #70708A;
-    --text-faint: #B0B0D0;
-    --code-bg:    #F0F0FF;
-    --accent:     #008A4B;
-    --accent-dim: #006B3A;
-    --sidebar-bg: #EEEEF8;
-    --header-bg:  #F5F5FF;
-    --glow:       0 4px 20px rgba(0,138,75,0.12);
-    --glow-sm:    0 2px 8px rgba(0,138,75,0.15);
-  }
-
   body {
-    font-family: var(--font-ui);
-    height: 100vh;
-    overflow: hidden;
-    transition: background 0.3s, color 0.3s;
-    background: var(--bg);
-    color: var(--text);
-    letter-spacing: -0.01em;
+    font-family: 'Plus Jakarta Sans', -apple-system, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+    height: 100vh; overflow: hidden;
+    -webkit-font-smoothing: antialiased;
   }
-
-  /* ── SCROLLBAR ───────────────────────────────────────── */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
+  ::-webkit-scrollbar-thumb { background: #1E1E35; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3A3A60; }
   input:focus, textarea:focus { outline: none; }
-  button { font-family: var(--font-ui); cursor: pointer; }
+  button { font-family: inherit; cursor: pointer; }
 
-  /* ── CODE EDITOR ─────────────────────────────────────── */
   .CodeMirror {
     height: 100% !important;
-    font-family: var(--font-code) !important;
-    font-size: 13px !important;
-    line-height: 1.75 !important;
-    background: var(--code-bg) !important;
+    font-family: 'Space Mono', 'JetBrains Mono', 'SF Mono', monospace !important;
+    font-size: 13px !important; line-height: 1.75 !important;
   }
   .cm-wrap { height: 100%; }
 
-  /* ── SIDEBAR ─────────────────────────────────────────── */
-  .sidebar {
-    background: var(--sidebar-bg) !important;
-    border-right: 1px solid var(--border) !important;
+  /* ── FORCE SANS-SERIF ON ALL UI TEXT ── */
+  #root * {
+    font-family: 'Plus Jakarta Sans', -apple-system, 'Helvetica Neue', system-ui, sans-serif !important;
+  }
+  #root .CodeMirror, #root .CodeMirror *, #root code, #root pre {
+    font-family: 'Space Mono', 'JetBrains Mono', 'SF Mono', monospace !important;
   }
 
-  /* ── PHASE PILLS ─────────────────────────────────────── */
-  .phase-pill {
-    border-radius: 8px !important;
-    transition: all 0.15s ease !important;
+  /* ── BUTTONS ── */
+  button { transition: all 0.15s ease !important; }
+  button:hover { opacity: 0.88 !important; transform: translateY(-1px) !important; }
+  button:active { transform: translateY(0) !important; opacity: 1 !important; }
+
+  /* ── RUN BUTTON GLOW ── */
+  button[style*="background:#00D084"],
+  button[style*="background:#00FF87"] {
+    box-shadow: 0 0 18px rgba(0,255,135,0.35) !important;
+    font-weight: 700 !important;
   }
-  .phase-pill:hover {
-    transform: translateX(2px) !important;
+  button[style*="background:#00D084"]:hover,
+  button[style*="background:#00FF87"]:hover {
+    box-shadow: 0 4px 28px rgba(0,255,135,0.6) !important;
+    opacity: 1 !important; transform: translateY(-2px) !important;
   }
 
-  /* ── LESSON ITEM ─────────────────────────────────────── */
-  .lesson-item {
-    border-radius: 6px !important;
-    transition: all 0.15s ease !important;
+  /* ── CARD HOVER ── */
+  div[style*="borderRadius:8"][style*="cursor:"pointer""],
+  div[style*="borderRadius:10"][style*="cursor:"pointer""] {
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
   }
-  .lesson-item:hover {
-    transform: translateX(2px) !important;
-  }
-
-  /* ── RUN BUTTON PULSE ─────────────────────────────────── */
-  @keyframes pulse-green {
-    0%   { box-shadow: 0 0 0 0 rgba(0,255,135,0.4); }
-    70%  { box-shadow: 0 0 0 8px rgba(0,255,135,0); }
-    100% { box-shadow: 0 0 0 0 rgba(0,255,135,0); }
-  }
-  .run-btn-pulse { animation: pulse-green 2s ease-in-out infinite; }
-
-  /* ── PROGRESS BAR ─────────────────────────────────────── */
-  @keyframes shimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position: 200% center; }
-  }
-  .progress-bar-fill {
-    background: linear-gradient(90deg, var(--green-dim), var(--green), var(--green-dim)) !important;
-    background-size: 200% auto !important;
-    animation: shimmer 2s linear infinite !important;
-    border-radius: 4px !important;
-    transition: width 0.5s cubic-bezier(0.4,0,0.2,1) !important;
+  div[style*="borderRadius:8"][style*="cursor:"pointer""]:hover,
+  div[style*="borderRadius:10"][style*="cursor:"pointer""]:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.45) !important;
   }
 
-  /* ── MEMORY TRICK CARD ───────────────────────────────── */
-  .mem-card {
-    border-radius: var(--radius) !important;
-    position: relative !important;
-    overflow: hidden !important;
-  }
-  .mem-card::before {
-    content: '';
-    position: absolute;
-    top: -1px; left: -1px; right: -1px; bottom: -1px;
-    border-radius: var(--radius);
-    background: linear-gradient(135deg, rgba(0,255,135,0.15), rgba(76,201,240,0.08));
-    z-index: 0;
-    pointer-events: none;
+  /* ── LESSON CARDS 2-COL GRID ── */
+  .phase-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
   }
 
-  /* ── CONCEPT BADGE ───────────────────────────────────── */
-  .concept-badge {
-    font-family: var(--font-code) !important;
+  /* ── CONCEPT CHIPS ── */
+  span[style*="borderRadius:3"] {
+    font-family: 'Space Mono', monospace !important;
     font-size: 11px !important;
-    padding: 3px 8px !important;
     border-radius: 20px !important;
-    transition: all 0.15s !important;
-  }
-  .concept-badge:hover {
-    transform: translateY(-1px) !important;
+    padding: 2px 10px !important;
   }
 
-  /* ── CODE LINE ROWS ───────────────────────────────────── */
-  .code-line-row {
-    border-radius: 4px !important;
-    transition: background 0.12s !important;
-  }
-  .code-line-row:hover {
-    background: var(--bg-raised) !important;
+  /* ── MEM TRICK BOX ── */
+  div[style*="borderLeft:3px solid"] {
+    border-radius: 0 8px 8px 0 !important;
   }
 
-  /* ── OUTPUT PANE ─────────────────────────────────────── */
-  .output-pane {
-    font-family: var(--font-code) !important;
-    font-size: 12.5px !important;
-    line-height: 1.7 !important;
-    background: var(--code-bg) !important;
+  /* ── CHAT FAB FLOAT ── */
+  button[style*="borderRadius:50%"][style*="position"] {
+    box-shadow: 0 4px 20px rgba(0,255,135,0.4) !important;
+    animation: bc-float 3s ease-in-out infinite !important;
   }
-
-  /* ── CHAT BUBBLE ─────────────────────────────────────── */
-  .chat-bubble-user {
-    background: linear-gradient(135deg, var(--green-dim), var(--green)) !important;
-    color: #000 !important;
-    border-radius: 14px 14px 4px 14px !important;
-  }
-  .chat-bubble-ai {
-    background: var(--bg-raised) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 14px 14px 14px 4px !important;
-  }
-
-  /* ── FLOATING CHAT BTN ───────────────────────────────── */
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-4px); }
-  }
-  .chat-fab {
-    animation: float 3s ease-in-out infinite !important;
-    box-shadow: 0 4px 20px rgba(0,255,135,0.35) !important;
-  }
-  .chat-fab:hover {
+  button[style*="borderRadius:50%"][style*="position"]:hover {
     animation: none !important;
-    transform: scale(1.08) !important;
-    box-shadow: 0 6px 28px rgba(0,255,135,0.5) !important;
+    transform: scale(1.1) translateY(-2px) !important;
+    opacity: 1 !important;
+    box-shadow: 0 8px 32px rgba(0,255,135,0.6) !important;
   }
 
-  /* ── HEADER GLOW ─────────────────────────────────────── */
-  .app-header {
-    background: var(--header-bg) !important;
-    border-bottom: 1px solid var(--border) !important;
-    backdrop-filter: blur(12px) !important;
+  /* ── PROGRESS BAR ── */
+  div[style*="height:2"][style*="bgRaised"] + div,
+  div[style*='width:'][style*='transition:"width'] {
+    background: linear-gradient(90deg, #00CC6A, #00FF87) !important;
+    box-shadow: 0 0 8px rgba(0,255,135,0.4) !important;
   }
 
-  /* ── PHASE CARD (curriculum grid) ───────────────────── */
-  .phase-card {
-    border-radius: var(--radius-lg) !important;
-    border: 1px solid var(--border) !important;
-    transition: all 0.2s ease !important;
-    overflow: hidden !important;
-  }
-  .phase-card:hover {
-    border-color: var(--border-hi) !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.25) !important;
+  /* ── SUBTLE AMBIENT GLOW ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 70% 35% at 50% 0%, rgba(0,255,135,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 100% 100%, rgba(76,201,240,0.03) 0%, transparent 55%);
   }
 
-  /* ── QUIZ OPTION ─────────────────────────────────────── */
-  .quiz-option {
-    transition: all 0.15s !important;
+  /* ── ANIMATIONS ── */
+  @keyframes bc-float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-5px); }
   }
-  .quiz-option:hover:not(:disabled) {
-    transform: translateX(4px) !important;
+  @keyframes bc-spin { to { transform: rotate(360deg); } }
+  @keyframes bc-load {
+    0%   { width:5%;  margin-left:0; }
+    50%  { width:70%; margin-left:0; }
+    100% { width:5%;  margin-left:95%; }
   }
+  @keyframes bc-fade-up {
+    from { opacity:0; transform:translateY(12px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .bc-ring {
+    width:44px; height:44px; border-radius:50%;
+    border:3px solid rgba(0,255,135,0.12);
+    border-top-color:#00FF87;
+    animation: bc-spin 0.85s linear infinite;
+    margin-bottom:22px;
+  }
+  .bc-t1 { animation: bc-fade-up 0.45s ease 0.05s both; }
+  .bc-t2 { animation: bc-fade-up 0.45s ease 0.25s both; }
+  .bc-t3 { animation: bc-fade-up 0.45s ease 0.45s both; }
 
-  /* ── MOBILE ──────────────────────────────────────────── */
   @media (max-width: 680px) {
-    .sidebar      { display: none !important; }
-    .lesson-wrap  { flex-direction: column !important; }
-    .lesson-pane  { min-height: 45vh; max-height: 50vh; flex: none !important; overflow-y: auto; }
-    .editor-pane  { width: 100% !important; min-width: 0 !important; flex: 1; }
-    .vdiv         { display: none !important; }
-    .hdr-sub      { display: none !important; }
-    .phase-grid   { grid-template-columns: 1fr !important; }
-  }
-
-  /* ── LOADING SCREEN ──────────────────────────────────── */
-  @keyframes spin-snake {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  @keyframes fade-in-up {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .loading-title { animation: fade-in-up 0.6s ease 0.2s both; }
-  .loading-sub   { animation: fade-in-up 0.6s ease 0.5s both; }
-
-  /* ── STAR FIELD ──────────────────────────────────────── */
-  .star-field {
-    position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
-  }
-  .star {
-    position: absolute; background: rgba(255,255,255,0.5); border-radius: 50%;
-    animation: twinkle var(--d) ease-in-out infinite var(--delay);
-  }
-  @keyframes twinkle {
-    0%, 100% { opacity: 0.2; } 50% { opacity: 0.8; }
+    .sidebar { display: none !important; }
+    .lesson-wrap { flex-direction: column !important; }
+    .vdiv { display: none !important; }
+    .hdr-sub { display: none !important; }
+    .phase-grid { grid-template-columns: 1fr !important; }
   }
 </style>
 </head>
@@ -343,25 +210,19 @@ window.addEventListener('unhandledrejection', function(e) {
   }
 });
 </script>
-<div id="loading-screen" style="position:fixed;inset:0;background:#07070C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:'Outfit',sans-serif;">
-  <div style="position:relative;margin-bottom:24px;">
-    <div style="font-size:72px;filter:drop-shadow(0 0 24px rgba(0,255,135,0.6));">🐍</div>
+<div id="loading-screen" style="position:fixed;inset:0;background:#060609;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;">
+  <div class="bc-ring"></div>
+  <div class="bc-t1" style="color:#00FF87;font-size:26px;font-weight:800;letter-spacing:-0.04em;margin-bottom:5px;font-family:-apple-system,sans-serif;">Python Bootcamp</div>
+  <div class="bc-t2" style="color:#252540;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;font-family:-apple-system,sans-serif;">v2026-03-09c &nbsp;·&nbsp; #44483a6b</div>
+  <div class="bc-t3" style="margin-top:26px;width:160px;height:2px;background:#111120;border-radius:2px;overflow:hidden;">
+    <div style="height:100%;border-radius:2px;background:linear-gradient(90deg,#00CC6A,#00FF87);animation:bc-load 1.8s ease-in-out infinite;"></div>
   </div>
-  <div class="loading-title" style="color:#00FF87;font-size:26px;font-weight:800;letter-spacing:-0.03em;margin-bottom:6px;">Python Bootcamp</div>
-  <div class="loading-sub" style="color:#606080;font-size:13px;font-weight:400;font-family:'Space Mono',monospace;">initializing pyodide...</div>
-  <div style="margin-top:28px;width:160px;height:3px;background:#13131E;border-radius:4px;overflow:hidden;">
-    <div style="height:100%;background:linear-gradient(90deg,#00C864,#00FF87);border-radius:4px;animation:load-bar 2s ease-in-out infinite;"></div>
-  </div>
-  <style>@keyframes load-bar{0%{width:0%;margin-left:0}50%{width:80%;margin-left:0}100%{width:10%;margin-left:90%}}</style>
-</div>
-  <div style="color:#00D084;font-size:18px;font-weight:bold;">Python Bootcamp</div>
-  <div style="color:#64748b;font-size:13px;margin-top:8px;">Loading...</div><div style="color:#334155;font-size:11px;margin-top:4px;">v2025-03-07c</div>
 </div>
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
 const curriculum = [
-  { id:1, phase:"Phase 1", title:"Python Basics", icon:"🐍", color:"var(--accent)", lessons:[
+  { id:1, phase:"Phase 1", title:"Python Basics", icon:"🐍", color:"#00D084", lessons:[
     { id:"1a", title:"Hello World & Variables", duration:"30 min", project:"🎯 Student Bio Card",
       memTrick:"💡 f-strings = f for 'fill in the blank'. {} are blank spaces filled with variables.",
       concepts:["print()","variables","f-strings","comments"],
@@ -405,6 +266,31 @@ const curriculum = [
         {code:'        status = "❌ FAIL"', exp:"📦 Doesn't meet any threshold."},
         {code:"", exp:null},
         {code:'    print(f"{status}  {name} | score: {score}")', exp:"🖨️ Prints one line per student with info filled in."},
+      ]},
+    { id:"1d", title:"Don't Panic: Reading Errors", duration:"20 min", project:"🚨 Decode 3 Common Errors",
+      memTrick:"💡 Read errors BOTTOM UP. Last line = what went wrong. Line above = where. TypeError = wrong type. NameError = typo or wrong order. IndexError = list too short.",
+      concepts:["TypeError","NameError","IndexError","debugging","str()"],
+      lines:[
+        {code:"# 🚨 DON'T PANIC: Reading Python Errors", exp:"💬 Errors are normal. Every developer sees them daily. Python's error messages are actually helpful — they tell you exactly what went wrong and where."},
+        {code:"", exp:null},
+        {code:"# ── Anatomy of an error ─────────────────────────────────", exp:"💬 Python errors have 3 parts: WHERE it happened (file + line), WHAT the code looked like, and WHY it failed (the error type + message). Always read bottom-up."},
+        {code:"# TypeError example:", exp:"💬 TypeError = wrong type. You mixed types Python can't combine automatically."},
+        {code:"age = 25", exp:"📦 age is an int."},
+        {code:"# print(\"I am \" + age)  # ✗ TypeError!", exp:"❌ This would crash: can't add str + int. Python doesn't auto-convert."},
+        {code:"print(\"I am \" + str(age))  # ✓ Fix: convert", exp:"✅ str() converts age to \"25\" so string + string works."},
+        {code:"", exp:null},
+        {code:"# NameError = used a variable before defining it", exp:"💬 NameError = Python doesn't know that name. Usually a typo or wrong order."},
+        {code:"# print(nmae)  # ✗ NameError: name 'nmae' is not defined", exp:"❌ Typo! nmae instead of name. Error message tells you the exact name it couldn't find."},
+        {code:"name = \"Alice\"", exp:"📦 Define it first."},
+        {code:"print(name)  # ✓ Works now", exp:"✅ Now Python knows what name is."},
+        {code:"", exp:null},
+        {code:"# IndexError = list index out of range", exp:"💬 IndexError = you asked for item [n] but the list isn't that long. Remember: lists start at 0."},
+        {code:"fruits = [\"apple\", \"banana\", \"cherry\"]", exp:"📦 3 items: index 0, 1, 2."},
+        {code:"# print(fruits[5])  # ✗ IndexError!", exp:"❌ Index 5 doesn't exist. Only 0, 1, 2 are valid."},
+        {code:"print(fruits[2])   # ✓ Last item = index 2", exp:"✅ fruits[2] = \"cherry\". Or use fruits[-1] for the last item always."},
+        {code:"", exp:null},
+        {code:"# ── The golden rule ────────────────────────────────────", exp:"💬 When you see an error: 1️⃣ Read the LAST line first — that's the actual problem. 2️⃣ Look at the line number. 3️⃣ Google the error type + message. You will always find an answer."},
+        {code:"print(\"Errors are just Python giving you directions 🧭\")", exp:"🖨️ This always runs fine. No error here!"}
       ]},
   ]},
   { id:2, phase:"Phase 2", title:"Data Types", icon:"📦", color:"#FF6B6B", lessons:[
@@ -457,6 +343,35 @@ const curriculum = [
         {code:"", exp:null},
         {code:"for item, price, qty, disc in cart:", exp:"🔁 LOOP with UNPACKING — each tuple splits into 4 variables automatically."},
         {code:"    format_receipt(item, price, qty, disc)", exp:"🖨️ Calls format_receipt() for each cart item."},
+      ]},
+    { id:"2e", title:"String Methods", duration:"35 min", project:"🎯 Text Transformer",
+      memTrick:"💡 Strings are immutable — methods return a NEW string, they don't change the original. Chain them: text.strip().lower().replace('a','b'). .split() = string → list. .join() = list → string.",
+      concepts:[".strip()",".split()",".join()",".replace()",".find()","in operator"],
+      lines:[
+        {code:"# 🎯 PROJECT: Text Transformer", exp:"💬 Strings have dozens of built-in methods. These are the ones you'll use in almost every real project."},
+        {code:"", exp:null},
+        {code:"sentence = \"  Hello, World! This is Python.  \"", exp:"📦 A messy string with extra spaces — typical of real-world data."},
+        {code:"", exp:null},
+        {code:"# ── Cleaning ────────────────────────────────────────────", exp:"💬 Always clean user input before using it. .strip() is the most common first step."},
+        {code:"print(sentence.strip())", exp:"✂️ .strip() removes leading and trailing whitespace. .lstrip() = left only. .rstrip() = right only."},
+        {code:"print(sentence.strip().lower())", exp:"🔧 Chain methods! .lower() = all lowercase. Useful for comparisons — \"Python\" == \"python\" is False without it."},
+        {code:"print(sentence.strip().upper())", exp:"📢 .upper() = ALL CAPS."},
+        {code:"", exp:null},
+        {code:"# ── Searching ────────────────────────────────────────────", exp:"💬 Find things inside strings."},
+        {code:"print(\"Python\" in sentence)", exp:"🔍 in operator — True if the substring exists. Fastest way to check if a word appears."},
+        {code:"print(sentence.find(\"World\"))", exp:"🔢 .find() returns the INDEX of the first match, or -1 if not found. Great for \"does this contain X?\""},
+        {code:"print(sentence.count(\"i\"))", exp:"🔢 .count() = how many times does this substring appear?"},
+        {code:"print(sentence.startswith(\"  Hello\"))", exp:"✅ .startswith() / .endswith() — check the beginning or end. Common for file extensions, URLs."},
+        {code:"", exp:null},
+        {code:"# ── Transforming ─────────────────────────────────────────", exp:"💬 Change strings without modifying the original — strings are immutable in Python."},
+        {code:"print(sentence.replace(\"Python\", \"🐍 Python\"))", exp:"🔄 .replace(old, new) — swap any substring. Doesn't change the original, returns a new string."},
+        {code:"print(sentence.strip().replace(\"!\", \"?\"))", exp:"🔄 Chain with strip() first to clean, then replace."},
+        {code:"", exp:null},
+        {code:"# ── Splitting & Joining ─────────────────────────────────", exp:"💬 .split() turns a string into a list. .join() turns a list into a string. Two sides of the same coin."},
+        {code:"words = \"apple,banana,cherry,date\"", exp:"📦 A CSV-style string."},
+        {code:"fruit_list = words.split(\",\")", exp:"✂️ .split(delimiter) — break string into list at each delimiter. No arg = split on whitespace."},
+        {code:"print(fruit_list)", exp:"🖨️ Prints: ['apple', 'banana', 'cherry', 'date']"},
+        {code:"print(\" | \".join(fruit_list))", exp:"🔗 .join(list) — glue a list back into a string with a separator. \" | \".join(...) = \"apple | banana | cherry | date\""}
       ]},
   ]},
   { id:3, phase:"Phase 3", title:"OOP", icon:"🏗️", color:"#4ECDC4", lessons:[
@@ -752,7 +667,44 @@ const curriculum = [
       ]},
   ]},
   { id:8, phase:"Phase 8", title:"Data & Files", icon:"🗄️", color:"#f59e0b", lessons:[
-    { id:"8a", title:"CSV & JSON Files", duration:"40 min", project:"🎯 Sales Report Generator",
+    { id:"8a", title:"File I/O: Read & Write Files", duration:"35 min", project:"🎯 Personal Notes App",
+      memTrick:"💡 open(file, mode) — 'w'=write, 'r'=read, 'a'=append. Always use with: so the file auto-closes. .read() = whole file. Loop over file = line by line. os.path.exists() = safe guard before reading.",
+      concepts:["open()","with statement","read","write","append","os.path"],
+      lines:[
+        {code:"# 🎯 PROJECT: Personal Notes App", exp:"💬 Reading and writing files is one of the most practical Python skills. Every real app saves data. open() is your gateway to the filesystem."},
+        {code:"", exp:null},
+        {code:"import os", exp:"📦 os module lets us check if files exist, delete them, etc."},
+        {code:"", exp:null},
+        {code:"# ── WRITE a file ───────────────────────────────────────────", exp:"💬 open(filename, mode) — mode \"w\" = write (creates or overwrites). \"a\" = append. \"r\" = read. Always use with: so the file closes automatically."},
+        {code:"with open(\"notes.txt\", \"w\") as f:", exp:"📂 WITH STATEMENT — opens the file and auto-closes it when the block ends. f is the file object."},
+        {code:"    f.write(\"Note 1: Python is awesome\\n\")", exp:"✏️ .write() writes a string. \\n = newline. Without it everything runs together on one line."},
+        {code:"    f.write(\"Note 2: Files save data forever\\n\")", exp:"✏️ Write another line."},
+        {code:"    f.write(\"Note 3: with: auto-closes the file\\n\")", exp:"✏️ One more note."},
+        {code:"print(\"File written!\")", exp:"🖨️ Confirm it worked."},
+        {code:"", exp:null},
+        {code:"# ── READ the whole file ──────────────────────────────────────", exp:"💬 mode \"r\" = read. .read() returns the entire file as one string."},
+        {code:"with open(\"notes.txt\", \"r\") as f:", exp:"📂 Open same file for reading."},
+        {code:"    content = f.read()", exp:"📋 .read() = entire file as one big string."},
+        {code:"print(\"=== File contents ===\")", exp:"🖨️ Label."},
+        {code:"print(content)", exp:"🖨️ Prints all 3 notes."},
+        {code:"", exp:null},
+        {code:"# ── READ line by line ────────────────────────────────────────", exp:"💬 Loop directly over a file object to read one line at a time. Memory-efficient for large files."},
+        {code:"print(\"=== Line by line ===\")", exp:"🖨️ Label."},
+        {code:"with open(\"notes.txt\", \"r\") as f:", exp:"📂 Open for reading again."},
+        {code:"    for i, line in enumerate(f, 1):", exp:"🔁 Loop over file directly — each iteration = one line. enumerate gives us a line number."},
+        {code:"        print(f\"  Line {i}: {line.strip()}\")", exp:"🖨️ .strip() removes the \\n at the end of each line."},
+        {code:"", exp:null},
+        {code:"# ── APPEND to a file ──────────────────────────────────────────", exp:"💬 mode \"a\" = append. Adds to the end WITHOUT overwriting. Use this to add new entries to a log or notes file."},
+        {code:"with open(\"notes.txt\", \"a\") as f:", exp:"📂 mode \"a\" = append."},
+        {code:"    f.write(\"Note 4: Append adds without overwriting\\n\")", exp:"✏️ Adds a 4th note."},
+        {code:"", exp:null},
+        {code:"# ── Check file exists ────────────────────────────────────────", exp:"💬 Always check before reading so your program doesn't crash on a missing file."},
+        {code:"if os.path.exists(\"notes.txt\"):", exp:"🔍 os.path.exists() = True if the file is there. Safe guard before reading."},
+        {code:"    print(f\"File has {os.path.getsize('notes.txt')} bytes\")", exp:"📏 .getsize() = file size in bytes. Good for sanity checking."},
+        {code:"os.remove(\"notes.txt\")", exp:"🗑️ Clean up — delete the file when done. os.remove() deletes permanently."},
+        {code:"print(\"Done! File deleted.\")", exp:"🖨️ Confirm cleanup."}
+      ]},
+    { id:"8b", duration:"40 min", project:"🎯 Sales Report Generator",
       memTrick:"💡 CSV = spreadsheet as plain text. JSON = Python dict saved to a file. Both are just text files with rules.",
       concepts:["csv.reader","csv.writer","json.load","json.dump","with open()"],
       lines:[
@@ -793,7 +745,7 @@ const curriculum = [
         {code:"loaded = json.loads(json_str)", exp:"📂 json.loads = string TO dict. The 's' means 'from string'. Now loaded is a Python dict again."},
         {code:"print('\\nLoaded back:', loaded['top_performer'], 'was top performer')", exp:"✅ Prove we can read back from JSON — access like any dict key."}
       ]},
-    { id:"8b", title:"SQLite Database", duration:"45 min", project:"🎯 Contacts Database",
+    { id:"8c", title:"SQLite Database", duration:"45 min", project:"🎯 Contacts Database",
       memTrick:"💡 SQL = ask questions to your data. SELECT = fetch, INSERT = add, DELETE = remove. SQLite = SQL built into Python, no server needed.",
       concepts:["sqlite3","CREATE TABLE","INSERT","SELECT","WHERE","cursor"],
       lines:[
@@ -836,7 +788,7 @@ const curriculum = [
         {code:"", exp:null},
         {code:"conn.close()", exp:"🔒 CLOSE — always close the connection when done. Frees up resources."}
       ]},
-    { id:"8c", title:"Data Analysis with Pandas", duration:"50 min", project:"🎯 Student Grade Analyzer",
+    { id:"8d", title:"Data Analysis with Pandas", duration:"50 min", project:"🎯 Student Grade Analyzer",
       memTrick:"💡 DataFrame = a spreadsheet in Python. df['column'] = one column. df[df['col'] > 5] = filter rows. groupby = group + calculate.",
       concepts:["pandas","DataFrame","read_csv","groupby","describe","filtering"],
       lines:[
@@ -1753,17 +1705,17 @@ function App() {
   }, [theme]);
   const D = theme === "dark";
   const T = {
-    bg:       D ? "#1e1e2e" : "#f8fafc",
-    bgDeep:   D ? "#13131f" : "#f1f5f9",
-    bgMid:    D ? "#2a2a3e" : "#ffffff",
-    bgRaised: D ? "#252538" : "#f1f5f9",
-    border:   D ? "#333350" : "#e2e8f0",
-    borderHv: D ? "#4a5568" : "#94a3b8",
-    text:     D ? "#e2e8ef" : "#1e293b",
-    textDim:  D ? "#94a3b8" : "#475569",
-    textMut:  D ? "#64748b" : "#64748b",
-    textFnt:  D ? "#4a5568" : "#94a3b8",
-    codeBg:   D ? "#1a1a2e" : "#f8fafc",
+    bg:       D ? "#0B0B13" : "#F0F0FF",
+    bgDeep:   D ? "#060609" : "#E4E4F8",
+    bgMid:    D ? "#111120" : "#FFFFFF",
+    bgRaised: D ? "#161625" : "#EBEBFC",
+    border:   D ? "#1E1E35" : "#D8D8F0",
+    borderHv: D ? "#3A3A60" : "#ABABD0",
+    text:     D ? "#F0F0FF" : "#0E0E28",
+    textDim:  D ? "#8080AA" : "#444470",
+    textMut:  D ? "#404060" : "#8888A0",
+    textFnt:  D ? "#252540" : "#BBBBCC",
+    codeBg:   D ? "#08080F" : "#EBEBFC",
   };
 
   /* ── PERSISTED STATE ────────────────────────────────── */
@@ -2165,7 +2117,7 @@ function App() {
         <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
           <span style={{fontSize:18,flexShrink:0}}>🐍</span>
           <div style={{minWidth:0}}>
-            <div style={{fontSize:12,fontWeight:"bold",color:"var(--accent)",letterSpacing:1,whiteSpace:"nowrap"}}>PYTHON BOOTCAMP</div>
+            <div style={{fontSize:12,fontWeight:"bold",color:"#00D084",letterSpacing:1,whiteSpace:"nowrap"}}>PYTHON BOOTCAMP</div>
             <div className="hdr-sub" style={{fontSize:13,color:T.textFnt}}>Line-by-Line · Built-in Editor · Run in Browser</div>
           </div>
         </div>
@@ -2177,7 +2129,7 @@ function App() {
           <button onClick={()=>setTheme(D?"light":"dark")} style={{background:T.bgRaised,color:T.textDim,border:`1px solid ${T.border}`,borderRadius:5,padding:"3px 8px",fontSize:12,flexShrink:0}}>
             {D?"☀️":"🌙"}
           </button>
-          <div title="Completed" style={{background:T.bgRaised,borderRadius:20,padding:"2px 8px",fontSize:12,color:"var(--accent)",flexShrink:0}}>{doneCount}/{totalLessons} ✅</div>
+          <div title="Completed" style={{background:T.bgRaised,borderRadius:20,padding:"2px 8px",fontSize:12,color:"#00D084",flexShrink:0}}>{doneCount}/{totalLessons} ✅</div>
           <div title="Progress"  style={{background:T.bgRaised,borderRadius:20,padding:"2px 8px",fontSize:12,color:"#F59E0B",flexShrink:0}}>{pct}%</div>
           {doneCount>0 && (
             <button title="Reset progress" onClick={()=>{ if(window.confirm("Reset all lesson progress?")){ ["bc_phase","bc_lesson","bc_completed","bc_bestscore"].forEach(k=>localStorage.removeItem(k)); setActivePhaseRaw(0);setActiveLessonRaw(null);setCompletedRaw({});setBestScore(0);setQuiz({active:false,q:0,score:0,answered:null}); }}}
@@ -2304,7 +2256,7 @@ function App() {
                 {AI_LESSONS.includes(activeLesson.id) && hasKey && (
                   <div style={{margin:"0 10px 10px",background:D?"#1a2e1a":"#f0fdf4",border:"1px solid #00D08444",borderRadius:6,padding:"7px 12px",display:"flex",gap:8,alignItems:"center"}}>
                     <span style={{fontSize:14}}>✅</span>
-                    <div style={{fontSize:11,color:"var(--accent)"}}>
+                    <div style={{fontSize:11,color:"#00D084"}}>
                       Code auto-configured for <strong>{activeProvider}</strong> — just hit ▶ Run
                     </div>
                   </div>
@@ -2418,7 +2370,7 @@ function App() {
                   {cat:"Strings",         items:["s.lower()","s.upper()","s.strip()",'s.split(",")','f"Hi {name}"']},
                 ].map(sec=>(
                   <div key={sec.cat} style={{background:T.bgMid,border:`1px solid ${T.border}`,borderRadius:8,overflow:"hidden"}}>
-                    <div style={{background:T.bgDeep,padding:"5px 10px",fontSize:12,fontWeight:"bold",color:"var(--accent)"}}>{sec.cat}</div>
+                    <div style={{background:T.bgDeep,padding:"5px 10px",fontSize:12,fontWeight:"bold",color:"#00D084"}}>{sec.cat}</div>
                     <div style={{padding:7}}>
                       {sec.items.map((item,i)=>(
                         <div key={i} onClick={()=>copyCode(item,`cs-${sec.cat}-${i}`)}
@@ -2488,7 +2440,7 @@ function App() {
                 {quiz.active && quiz.q>=QUIZ.length && (
                   <div style={{textAlign:"center",padding:36}}>
                     <div style={{fontSize:48,marginBottom:10}}>{quiz.score>=6?"🏆":quiz.score>=4?"💪":"📚"}</div>
-                    <div style={{fontSize:22,color:"var(--accent)",fontWeight:"bold",marginBottom:5}}>{quiz.score}/{QUIZ.length}</div>
+                    <div style={{fontSize:22,color:"#00D084",fontWeight:"bold",marginBottom:5}}>{quiz.score}/{QUIZ.length}</div>
                     {quiz.score>bestScore && <div style={{fontSize:13,color:"#F59E0B",marginBottom:5}}>🎉 New best score!</div>}
                     {bestScore>0&&quiz.score<=bestScore && <div style={{fontSize:13,color:T.textMut,marginBottom:5}}>🏅 Best: {bestScore}/{QUIZ.length}</div>}
                     <div style={{fontSize:13,color:T.text,marginBottom:18}}>{quiz.score>=6?"Syntax locked in! 🔥":quiz.score>=4?"Getting there — retry!":"Keep at it — repetition = memory."}</div>
@@ -2512,7 +2464,7 @@ function App() {
             <div style={{fontSize:13,color:T.textMut,marginBottom:18}}>Enter one API key to power the chat tutor. Stored locally — never sent anywhere else.</div>
 
             {[
-              {id:"gemini",    label:"🟢 Google Gemini",    color:"var(--accent)", badge:"⭐ FREE",         hint:`Go to aistudio.google.com → Get API Key. Free. Uses gemini-2.5-flash.`,           key:geminiKey,    ph:"Paste Gemini API key"},
+              {id:"gemini",    label:"🟢 Google Gemini",    color:"#00D084", badge:"⭐ FREE",         hint:`Go to aistudio.google.com → Get API Key. Free. Uses gemini-2.5-flash.`,           key:geminiKey,    ph:"Paste Gemini API key"},
               {id:"openai",    label:"🟦 OpenAI",           color:"#74aa9c", badge:"~$0.60/1M tokens", hint:`platform.openai.com → API Keys. Requires ~$5 credit. Uses gpt-4o-mini.`,        key:openaiKey,    ph:"Paste OpenAI API key (sk-...)"},
               {id:"anthropic", label:"🟠 Anthropic (Claude)",color:"#f472b6", badge:"~$0.80/1M tokens", hint:`console.anthropic.com → API Keys. Add $5 credit. Uses Claude Haiku.`,            key:anthropicKey, ph:"Paste Anthropic API key (sk-ant-...)"},
             ].map(p=>(
@@ -2532,7 +2484,7 @@ function App() {
 
             {hasKey && (
               <div style={{fontSize:12,color:T.textMut,background:T.bgRaised,borderRadius:6,padding:"7px 10px",marginBottom:14,border:`1px solid ${T.border}`}}>
-                🔄 <strong style={{color:T.textDim}}>Active:</strong> <span style={{color:"var(--accent)"}}>{activeProvider}</span> — priority: Gemini → OpenAI → Anthropic.
+                🔄 <strong style={{color:T.textDim}}>Active:</strong> <span style={{color:"#00D084"}}>{activeProvider}</span> — priority: Gemini → OpenAI → Anthropic.
                 {" "}<button onClick={()=>{if(window.confirm("Clear all API keys?")){["gemini_key","openai_key","anthropic_key"].forEach(k=>localStorage.removeItem(k));setGeminiKey("");setOpenaiKey("");setAnthropicKey("");}}}
                   style={{background:"none",border:"none",color:"#fc8181",fontSize:12,textDecoration:"underline",padding:0,cursor:"pointer"}}>Clear all keys</button>
               </div>
@@ -2593,180 +2545,5 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
-
-<style id="redesign-patch">
-  /* ── SIDEBAR OVERHAUL ──────────────────────────────────── */
-  /* Sidebar header / logo */
-  [style*="background:#13131f"] { background: var(--bg-deep) !important; }
-  [style*="background:#1e1e2e"] { background: var(--bg) !important; }
-  [style*="background:#2a2a3e"] { background: var(--bg-mid) !important; }
-  [style*="background:#252538"] { background: var(--bg-raised) !important; }
-  [style*="background:#0d0d14"], [style*="background:#0D0D14"] { background: var(--bg-deep) !important; }
-
-  /* Kill boring mono font on UI labels */
-  div[style*="JetBrains"], span[style*="JetBrains"], button[style*="JetBrains"] {
-    font-family: var(--font-ui) !important;
-  }
-
-  /* Accent color updates */
-  [style*="color:#00D084"] { color: var(--accent) !important; }
-  [style*="background:#00D084"] { background: var(--accent) !important; }
-  [style*="color:#64748b"] { color: var(--text-muted) !important; }
-  [style*="color:#94a3b8"] { color: var(--text-dim) !important; }
-  [style*="color:#e2e8ef"], [style*="color:#e2e8f0"] { color: var(--text) !important; }
-  [style*="borderColor:#333350"] { border-color: var(--border) !important; }
-  [style*="border:1px solid #333350"] { border-color: var(--border) !important; }
-
-  /* ── HEADER ────────────────────────────────────────────── */
-  /* Make the main header more prominent */
-  div[style*="height:44px"][style*="display:flex"][style*="align-items:center"] {
-    height: 52px !important;
-    padding: 0 18px !important;
-  }
-
-  /* ── PROGRESS BAR TRACK ─────────────────────────────────── */
-  div[style*="height:3px"][style*="background:#"][style*="border-radius"] {
-    height: 4px !important;
-    border-radius: 4px !important;
-    background: var(--border) !important;
-    overflow: hidden !important;
-  }
-
-  /* ── RUN BUTTON ────────────────────────────────────────── */
-  button[style*="background:#00D084"][style*="color:#000"] {
-    font-family: var(--font-ui) !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.02em !important;
-    border-radius: 8px !important;
-    transition: all 0.15s ease !important;
-    box-shadow: 0 0 12px rgba(0,255,135,0.25) !important;
-  }
-  button[style*="background:#00D084"][style*="color:#000"]:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 20px rgba(0,255,135,0.4) !important;
-  }
-
-  /* ── LESSON TITLE ─────────────────────────────────────── */
-  div[style*="font-size:19px"], div[style*="font-size:18px"] {
-    font-family: var(--font-ui) !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.03em !important;
-  }
-
-  /* ── PHASE TITLES ─────────────────────────────────────── */
-  div[style*="font-size:13px"][style*="font-weight:bold"],
-  div[style*="font-size:14px"][style*="font-weight:bold"] {
-    font-family: var(--font-ui) !important;
-    letter-spacing: -0.01em !important;
-  }
-
-  /* ── OUTPUT AREA ──────────────────────────────────────── */
-  div[style*="font-family"][style*="Mono"][style*="overflow-y:auto"] {
-    font-family: var(--font-code) !important;
-    font-size: 12.5px !important;
-  }
-
-  /* ── CHEAT SHEET / QUIZ HEADINGS ──────────────────────── */
-  div[style*="font-size:22px"], div[style*="font-size:20px"] {
-    font-family: var(--font-ui) !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.03em !important;
-  }
-
-  /* ── CURRICULUM GRID PHASE TITLES ─────────────────────── */
-  div[style*="font-size:16px"][style*="font-weight:bold"] {
-    font-family: var(--font-ui) !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.02em !important;
-  }
-
-  /* ── COMPLETION BADGE ─────────────────────────────────── */
-  div[style*="border-radius:20px"][style*="font-size:12px"] {
-    font-family: var(--font-ui) !important;
-    font-weight: 600 !important;
-  }
-
-  /* ── SMOOTH TRANSITIONS ───────────────────────────────── */
-  * { transition-property: background-color, border-color, color, box-shadow;
-      transition-duration: 0.15s; transition-timing-function: ease; }
-  img, svg, .CodeMirror * { transition: none !important; }
-
-  /* ── SUBTLE NOISE TEXTURE ON BACKGROUND ───────────────── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 9998;
-    opacity: 0.4;
-  }
-  body.light::before { opacity: 0.15; }
-
-  /* ── NAV TABS STYLE ───────────────────────────────────── */
-  button[style*="border-bottom:2px solid"] {
-    font-family: var(--font-ui) !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.01em !important;
-    font-size: 13px !important;
-  }
-
-  /* ── DURATION BADGES ──────────────────────────────────── */
-  span[style*="⏱"], div[style*="⏱"] {
-    font-family: var(--font-ui) !important;
-  }
-
-  /* ── TOGGLE EXPLAIN BUTTON ────────────────────────────── */
-  button[style*="border-radius:6px"][style*="font-size:12px"] {
-    font-family: var(--font-ui) !important;
-    font-weight: 600 !important;
-    border-radius: 8px !important;
-  }
-
-  /* ── SIDEBAR PROGRESS COUNTER ─────────────────────────── */
-  div[style*="font-size:12px"][style*="color"] {
-    font-family: var(--font-ui) !important;
-  }
-
-  /* ── MEMORY TRICK BOX ─────────────────────────────────── */
-  div[style*="border-left:3px solid"] {
-    border-radius: 0 8px 8px 0 !important;
-    padding: 12px 14px !important;
-    font-family: var(--font-ui) !important;
-    font-size: 13.5px !important;
-    line-height: 1.6 !important;
-  }
-
-  /* ── CONCEPT CHIPS ────────────────────────────────────── */
-  span[style*="border-radius:12px"], span[style*="border-radius:4px"][style*="font-size:11px"] {
-    font-family: var(--font-code) !important;
-    font-size: 11px !important;
-    border-radius: 20px !important;
-    padding: 2px 9px !important;
-    font-weight: 400 !important;
-  }
-
-  /* ── SETTINGS MODAL ───────────────────────────────────── */
-  div[style*="border-radius:14px"][style*="padding:22px"] {
-    border-radius: 20px !important;
-    border: 1px solid var(--border-hi) !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
-  }
-
-  /* ── CHAT WINDOW ──────────────────────────────────────── */
-  div[style*="border-radius:14px"][style*="width:340px"],
-  div[style*="border-radius:14px"][style*="width:350px"] {
-    border-radius: 18px !important;
-    border: 1px solid var(--border-hi) !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,255,135,0.08) !important;
-  }
-
-  /* ── PHASE ICONS GLOW ─────────────────────────────────── */
-  div[style*="font-size:28px"], div[style*="font-size:24px"] {
-    filter: drop-shadow(0 0 6px rgba(0,255,135,0.2));
-  }
-
-</style>
-
 </body>
 </html>
